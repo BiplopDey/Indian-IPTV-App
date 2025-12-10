@@ -112,31 +112,28 @@ class ChannelsProvider with ChangeNotifier {
     return match?.group(1) ?? '';
   }
 
+  static const Map<String, String> _countryCodes = {
+    'IN': 'India',
+    'US': 'United States',
+    'UK': 'United Kingdom',
+    'GB': 'United Kingdom',
+    'CA': 'Canada',
+    'AU': 'Australia',
+    'PK': 'Pakistan',
+    'BD': 'Bangladesh',
+    'NP': 'Nepal',
+    'LK': 'Sri Lanka',
+    'AE': 'UAE',
+    'SA': 'Saudi Arabia',
+  };
+
   String convertCountryCodeToName(String code) {
-    // Common country code mappings
-    final Map<String, String> countryCodes = {
-      'IN': 'India',
-      'US': 'United States',
-      'UK': 'United Kingdom',
-      'GB': 'United Kingdom',
-      'CA': 'Canada',
-      'AU': 'Australia',
-      'PK': 'Pakistan',
-      'BD': 'Bangladesh',
-      'NP': 'Nepal',
-      'LK': 'Sri Lanka',
-      'AE': 'UAE',
-      'SA': 'Saudi Arabia',
-    };
-    return countryCodes[code.toUpperCase()] ?? code;
+    return _countryCodes[code.toUpperCase()] ?? code;
   }
 
   Channel? getChannelByNumber(int number) {
-    try {
-      return channels.firstWhere((channel) => channel.number == number);
-    } catch (e) {
-      return null;
-    }
+    final result = channels.where((channel) => channel.number == number);
+    return result.isEmpty ? null : result.first;
   }
 
   List<String> getCountries() {
