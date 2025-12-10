@@ -132,8 +132,10 @@ class ChannelsProvider with ChangeNotifier {
   }
 
   Channel? getChannelByNumber(int number) {
-    final result = channels.where((channel) => channel.number == number);
-    return result.isEmpty ? null : result.first;
+    return channels.cast<Channel?>().firstWhere(
+      (channel) => channel!.number == number,
+      orElse: () => null,
+    );
   }
 
   List<String> getCountries() {

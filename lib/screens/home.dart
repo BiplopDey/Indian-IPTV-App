@@ -14,6 +14,29 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  static const Map<LogicalKeyboardKey, String> _keyToDigit = {
+    LogicalKeyboardKey.digit0: '0',
+    LogicalKeyboardKey.numpad0: '0',
+    LogicalKeyboardKey.digit1: '1',
+    LogicalKeyboardKey.numpad1: '1',
+    LogicalKeyboardKey.digit2: '2',
+    LogicalKeyboardKey.numpad2: '2',
+    LogicalKeyboardKey.digit3: '3',
+    LogicalKeyboardKey.numpad3: '3',
+    LogicalKeyboardKey.digit4: '4',
+    LogicalKeyboardKey.numpad4: '4',
+    LogicalKeyboardKey.digit5: '5',
+    LogicalKeyboardKey.numpad5: '5',
+    LogicalKeyboardKey.digit6: '6',
+    LogicalKeyboardKey.numpad6: '6',
+    LogicalKeyboardKey.digit7: '7',
+    LogicalKeyboardKey.numpad7: '7',
+    LogicalKeyboardKey.digit8: '8',
+    LogicalKeyboardKey.numpad8: '8',
+    LogicalKeyboardKey.digit9: '9',
+    LogicalKeyboardKey.numpad9: '9',
+  };
+
   List<Channel> channels = [];
   List<Channel> filteredChannels = [];
   TextEditingController searchController = TextEditingController();
@@ -199,36 +222,12 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    // Map of keyboard keys to their digit strings
-    final keyToDigit = {
-      LogicalKeyboardKey.digit0: '0',
-      LogicalKeyboardKey.numpad0: '0',
-      LogicalKeyboardKey.digit1: '1',
-      LogicalKeyboardKey.numpad1: '1',
-      LogicalKeyboardKey.digit2: '2',
-      LogicalKeyboardKey.numpad2: '2',
-      LogicalKeyboardKey.digit3: '3',
-      LogicalKeyboardKey.numpad3: '3',
-      LogicalKeyboardKey.digit4: '4',
-      LogicalKeyboardKey.numpad4: '4',
-      LogicalKeyboardKey.digit5: '5',
-      LogicalKeyboardKey.numpad5: '5',
-      LogicalKeyboardKey.digit6: '6',
-      LogicalKeyboardKey.numpad6: '6',
-      LogicalKeyboardKey.digit7: '7',
-      LogicalKeyboardKey.numpad7: '7',
-      LogicalKeyboardKey.digit8: '8',
-      LogicalKeyboardKey.numpad8: '8',
-      LogicalKeyboardKey.digit9: '9',
-      LogicalKeyboardKey.numpad9: '9',
-    };
-
     return RawKeyboardListener(
       focusNode: _focusNode,
       autofocus: true,
       onKey: (RawKeyEvent event) {
         if (event is RawKeyDownEvent) {
-          final digit = keyToDigit[event.logicalKey];
+          final digit = _keyToDigit[event.logicalKey];
           if (digit != null) {
             handleNumberInput(digit);
           }
