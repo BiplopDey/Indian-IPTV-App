@@ -2,7 +2,7 @@ import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../model/channel.dart';
-import 'package:wakelock/wakelock.dart'; // Add this import
+import 'package:wakelock/wakelock.dart';
 
 class Player extends StatefulWidget {
   final Channel channel;
@@ -22,6 +22,9 @@ class _PlayerState extends State<Player> {
   @override
   void initState() {
     super.initState();
+    // Enable wakelock when entering the player screen to prevent screensaver
+    Wakelock.enable();
+
     videoPlayerController =
         VideoPlayerController.networkUrl(Uri.parse(widget.channel.streamUrl))
           ..initialize().then((_) {
@@ -46,26 +49,14 @@ class _PlayerState extends State<Player> {
         showPlayButton: false,
       ),
     );
-
-    // Enable wake lock when video starts playing
-    videoPlayerController.addListener(() {
-      if (videoPlayerController.value.isPlaying) {
-        Wakelock.enable();
-      }
-    });
-
-    // Disable wake lock when video stops
-    videoPlayerController.addListener(() {
-      if (!videoPlayerController.value.isPlaying) {
-        Wakelock.disable();
-      }
-    });
   }
 
   @override
   void dispose() {
     videoPlayerController.dispose();
     chewieController.dispose();
+    // Disable wakelock when leaving the player screen
+    Wakelock.disable();
     super.dispose();
   }
 
