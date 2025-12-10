@@ -14,7 +14,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  static const Map<LogicalKeyboardKey, String> _keyToDigit = {
+  // Map for keyboard key to digit conversion
+  final Map<LogicalKeyboardKey, String> _keyToDigit = {
     LogicalKeyboardKey.digit0: '0',
     LogicalKeyboardKey.numpad0: '0',
     LogicalKeyboardKey.digit1: '1',
