@@ -47,8 +47,14 @@ jobs:
           flutter build apk --release --dart-define=TARGET=tv
           cp build/app/outputs/flutter-apk/app-release.apk artifacts/app-release-tv.apk
 
-      - name: Upload APK artifacts
+      - name: Upload mobile APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apks
-          path: artifacts/*.apk
+          name: android-apk-mobile
+          path: artifacts/app-release-mobile.apk
+
+      - name: Upload Android TV APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-tv
+          path: artifacts/app-release-tv.apk
