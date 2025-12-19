@@ -51,6 +51,20 @@ android {
         versionName flutterVersionName
     }
 
+    flavorDimensions "target"
+    productFlavors {
+        mobile {
+            dimension "target"
+            applicationIdSuffix ".mobile"
+            versionNameSuffix "-mobile"
+        }
+        tv {
+            dimension "target"
+            applicationIdSuffix ".tv"
+            versionNameSuffix "-tv"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

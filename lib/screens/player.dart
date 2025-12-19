@@ -177,19 +177,20 @@ class _PlayerState extends State<Player> {
             appBar: AppBar(
               title: Text(channel.name),
             ),
-            body: Center(
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : _channelNotFound
-                      ? const Text('Channel not available now',
-                          style: TextStyle(fontSize: 24.0))
-                      : SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.5,
-                          child: chewieController == null
-                              ? const SizedBox.shrink()
-                              : Chewie(controller: chewieController!),
-                        ),
-            ),
+            body: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : _channelNotFound
+                    ? const Center(
+                        child: Text('Channel not available now',
+                            style: TextStyle(fontSize: 24.0)),
+                      )
+                    : SizedBox.expand(
+                        child: chewieController == null
+                            ? const SizedBox.shrink()
+                            : Chewie(controller: chewieController!),
+                      ),
           ),
         ),
       ),
