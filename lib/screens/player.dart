@@ -28,6 +28,7 @@ class _PlayerState extends State<Player> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _currentIndex = widget.initialIndex;
     _loadChannel(_currentIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -83,7 +84,7 @@ class _PlayerState extends State<Player> {
         autoInitialize: true,
         isLive: true,
         autoPlay: true,
-        aspectRatio: 3 / 2,
+        aspectRatio: controller.value.aspectRatio,
         showOptions: false,
         customControls: const MaterialDesktopControls(
           showPlayButton: false,
@@ -133,6 +134,7 @@ class _PlayerState extends State<Player> {
   void dispose() {
     _disposeControllers();
     _focusNode.dispose();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
 
@@ -174,9 +176,6 @@ class _PlayerState extends State<Player> {
           focusNode: _focusNode,
           autofocus: true,
           child: Scaffold(
-            appBar: AppBar(
-              title: Text(channel.name),
-            ),
             body: _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(),

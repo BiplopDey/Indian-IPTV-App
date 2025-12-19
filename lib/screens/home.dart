@@ -13,6 +13,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final bool _isTv =
+      const String.fromEnvironment('TARGET', defaultValue: 'mobile') == 'tv';
   List<Channel> channels = [];
   List<Channel> filteredChannels = [];
   TextEditingController searchController = TextEditingController();
@@ -77,8 +79,9 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
+    final List<Widget> sections = [];
+    if (!_isTv) {
+      sections.add(
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: TextField(
@@ -94,46 +97,51 @@ class _HomeState extends State<Home> {
             ),
           ),
         ),
-        Expanded(
-          child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(),
-                )
-              : ListView.builder(
-                  itemCount: filteredChannels.length,
-                  itemBuilder: (context, index) {
-                    return ListTile(
-                      leading: Image.network(
-                        filteredChannels[index].logoUrl,
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            'assets/images/tv-icon.png',
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.contain,
-                          );
-                        },
-                      ),
-                      title: Text(filteredChannels[index].name),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Player(
-                              channels: filteredChannels,
-                              initialIndex: index,
-                            ),
-                          ),
+      );
+    }
+    sections.add(
+      Expanded(
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : ListView.builder(
+                itemCount: filteredChannels.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: Image.network(
+                      filteredChannels[index].logoUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/tv-icon.png',
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.contain,
                         );
                       },
-                    );
-                  },
-                ),
-        ),
-      ],
+                    ),
+                    title: Text(filteredChannels[index].name),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Player(
+                            channels: filteredChannels,
+                            initialIndex: index,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+      ),
+    );
+    return Column(
+      children: sections,
     );
   }
 }
