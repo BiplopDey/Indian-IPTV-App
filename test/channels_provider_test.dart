@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ip_tv/model/channel.dart';
 import 'package:ip_tv/provider/channels_provider.dart';
+import 'package:yaml/yaml.dart';
 
 void main() {
   group('ChannelsProvider helpers', () {
@@ -54,5 +57,65 @@ void main() {
       final provider = ChannelsProvider();
       expect(provider.getDefaultLogoUrl(), 'assets/images/tv-icon.png');
     });
+
+    test('loadFilteredChannelNames reads names from the filtered asset', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final provider = ChannelsProvider();
+      final loaded = await provider.loadFilteredChannelNames();
+      expect(loaded, isNotEmpty);
+
+      final rawConfig =
+          File('assets/filtered_ordered_channels.yml').readAsStringSync();
+      final config = loadYaml(rawConfig) as YamlMap;
+      final list = config['channels'] as YamlList;
+      final expectedName = list.first.toString();
+      expect(loaded.first, expectedName);
+    });
+
+    test('filtered list is synchronized with the all channels list', () {
+      final allRaw =
+          File('assets/all_channels_available.yml').readAsStringSync();
+      final filteredRaw =
+          File('assets/filtered_ordered_channels.yml').readAsStringSync();
+
+      final allNames = _readYamlNames(allRaw);
+      final filteredNames = _readYamlNames(filteredRaw);
+      expect(allNames, isNotEmpty);
+      expect(filteredNames, isNotEmpty);
+
+      final allSet = allNames.toSet();
+      final seen = <String>{};
+      for (final name in filteredNames) {
+        expect(allSet.contains(name), isTrue,
+            reason: 'Missing in all_channels_available.yml: $name');
+        expect(seen.add(name), isTrue,
+            reason: 'Duplicate in filtered_ordered_channels.yml: $name');
+      }
+    });
   });
+}
+
+List<String> _readYamlNames(String raw) {
+  final data = loadYaml(raw);
+  if (data is! YamlMap) {
+    return [];
+  }
+  final rawChannels = data['channels'];
+  if (rawChannels is! YamlList) {
+    return [];
+  }
+
+  final result = <String>[];
+  for (final entry in rawChannels) {
+    if (entry == null) {
+      continue;
+    }
+    final name = entry.toString().trim();
+    if (name.isEmpty) {
+      continue;
+    }
+    result.add(name);
+  }
+
+  return result;
 }

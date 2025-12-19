@@ -47,6 +47,16 @@ class _PlayerState extends State<Player> {
     await _disposeControllers();
 
     final channel = widget.channels[index];
+    if (channel.streamUrl.trim().isEmpty) {
+      if (!mounted || loadToken != _loadToken) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _channelNotFound = true;
+      });
+      return;
+    }
     final controller =
         VideoPlayerController.networkUrl(Uri.parse(channel.streamUrl));
     videoPlayerController = controller;
