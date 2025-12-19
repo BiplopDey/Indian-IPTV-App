@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import '../model/channel.dart';
-import 'package:wakelock/wakelock.dart'; // Add this import
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class Player extends StatefulWidget {
   final List<Channel> channels;
@@ -66,9 +66,9 @@ class _PlayerState extends State<Player> {
         return;
       }
       if (controller.value.isPlaying) {
-        Wakelock.enable();
+        WakelockPlus.enable();
       } else {
-        Wakelock.disable();
+        WakelockPlus.disable();
       }
     });
 
@@ -113,7 +113,7 @@ class _PlayerState extends State<Player> {
       await controller.dispose();
     }
     chewie?.dispose();
-    await Wakelock.disable();
+    await WakelockPlus.disable();
   }
 
   void _changeChannel(int newIndex) {
