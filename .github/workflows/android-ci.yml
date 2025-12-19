@@ -44,6 +44,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
+      - name: Read app version
+        run: |
+          VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
+          VERSION_SAFE=${VERSION//+/-}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "VERSION_SAFE=$VERSION_SAFE" >> "$GITHUB_ENV"
+
       - name: Flutter pub get
         run: flutter pub get
 
@@ -54,28 +61,32 @@ jobs:
         run: |
           flutter build apk --release --flavor mobile --dart-define=TARGET=mobile --no-pub
           mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk artifacts/app-release-mobile-${VERSION_SAFE}.apk
           cp build/app/outputs/flutter-apk/app-release.apk artifacts/app-release-mobile.apk
 
       - name: Build Android TV APK
         run: |
           flutter build apk --release --flavor tv --dart-define=TARGET=tv --no-pub
+          cp build/app/outputs/flutter-apk/app-release.apk artifacts/app-release-tv-${VERSION_SAFE}.apk
           cp build/app/outputs/flutter-apk/app-release.apk artifacts/app-release-tv.apk
 
       - name: Upload mobile APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk-mobile
-          path: artifacts/app-release-mobile.apk
+          name: android-apk-mobile-${{ env.VERSION_SAFE }}
+          path: artifacts/app-release-mobile-${{ env.VERSION_SAFE }}.apk
 
       - name: Upload Android TV APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk-tv
-          path: artifacts/app-release-tv.apk
+          name: android-apk-tv-${{ env.VERSION_SAFE }}
+          path: artifacts/app-release-tv-${{ env.VERSION_SAFE }}.apk
 
       - name: Prepare GitHub Pages artifacts
         run: |
           mkdir -p gh-pages
+          cp artifacts/app-release-mobile-${VERSION_SAFE}.apk gh-pages/app-release-mobile-${VERSION_SAFE}.apk
+          cp artifacts/app-release-tv-${VERSION_SAFE}.apk gh-pages/app-release-tv-${VERSION_SAFE}.apk
           cp artifacts/app-release-mobile.apk gh-pages/app-release-mobile.apk
           cp artifacts/app-release-tv.apk gh-pages/app-release-tv.apk
           cat > gh-pages/index.html <<'HTML'
@@ -89,8 +100,10 @@ jobs:
             <body>
               <h1>Android APK Downloads</h1>
               <ul>
-                <li><a href="app-release-mobile.apk">app-release-mobile.apk</a></li>
-                <li><a href="app-release-tv.apk">app-release-tv.apk</a></li>
+                <li><a href="app-release-mobile-${VERSION_SAFE}.apk">app-release-mobile-${VERSION_SAFE}.apk</a></li>
+                <li><a href="app-release-tv-${VERSION_SAFE}.apk">app-release-tv-${VERSION_SAFE}.apk</a></li>
+                <li><a href="app-release-mobile.apk">app-release-mobile.apk (latest)</a></li>
+                <li><a href="app-release-tv.apk">app-release-tv.apk (latest)</a></li>
               </ul>
             </body>
           </html>
