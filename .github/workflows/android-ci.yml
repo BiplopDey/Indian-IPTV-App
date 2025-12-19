@@ -11,6 +11,9 @@ on:
       - develop
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   test-and-build-android:
     runs-on: ubuntu-latest
@@ -69,3 +72,33 @@ jobs:
         with:
           name: android-apk-tv
           path: artifacts/app-release-tv.apk
+
+      - name: Prepare GitHub Pages artifacts
+        run: |
+          mkdir -p gh-pages
+          cp artifacts/app-release-mobile.apk gh-pages/app-release-mobile.apk
+          cp artifacts/app-release-tv.apk gh-pages/app-release-tv.apk
+          cat > gh-pages/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <title>Android APK Downloads</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+            </head>
+            <body>
+              <h1>Android APK Downloads</h1>
+              <ul>
+                <li><a href="app-release-mobile.apk">app-release-mobile.apk</a></li>
+                <li><a href="app-release-tv.apk">app-release-tv.apk</a></li>
+              </ul>
+            </body>
+          </html>
+          HTML
+
+      - name: Deploy APKs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: gh-pages
+          force_orphan: true
