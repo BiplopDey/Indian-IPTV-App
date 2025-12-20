@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
 import 'screens/home.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
-  runApp(M3UPlayer());
-}
+void main() => runApp(M3UPlayer());
 
 class M3UPlayer extends StatefulWidget {
   @override
