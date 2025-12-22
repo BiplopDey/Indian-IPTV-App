@@ -16,7 +16,7 @@ class Player extends StatefulWidget {
   _PlayerState createState() => _PlayerState();
 }
 
-class _PlayerState extends State<Player> {
+class _PlayerState extends State<Player> with WidgetsBindingObserver {
   VideoPlayerController? videoPlayerController;
   ChewieController? chewieController;
   late int _currentIndex;
@@ -24,10 +24,12 @@ class _PlayerState extends State<Player> {
   final FocusNode _focusNode = FocusNode();
   bool _isLoading = true;
   bool _channelNotFound = false;
+  bool _wasPlayingBeforePause = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _currentIndex = widget.initialIndex;
     _loadChannel(_currentIndex);
@@ -118,24 +120,53 @@ class _PlayerState extends State<Player> {
   }
 
   void _changeChannel(int newIndex) {
-    if (newIndex < 0 || newIndex >= widget.channels.length) {
+    final totalChannels = widget.channels.length;
+    if (totalChannels == 0) {
       return;
     }
-    if (newIndex == _currentIndex) {
+    final wrappedIndex = newIndex % totalChannels;
+    final normalizedIndex =
+        wrappedIndex < 0 ? wrappedIndex + totalChannels : wrappedIndex;
+    if (normalizedIndex == _currentIndex) {
       return;
     }
     setState(() {
-      _currentIndex = newIndex;
+      _currentIndex = normalizedIndex;
     });
-    _loadChannel(newIndex);
+    _loadChannel(normalizedIndex);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _disposeControllers();
     _focusNode.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final controller = videoPlayerController;
+    if (controller == null || !controller.value.isInitialized) {
+      return;
+    }
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        _wasPlayingBeforePause = controller.value.isPlaying;
+        controller.pause();
+        WakelockPlus.disable();
+        break;
+      case AppLifecycleState.resumed:
+        if (_wasPlayingBeforePause) {
+          controller.play();
+        }
+        _wasPlayingBeforePause = false;
+        break;
+    }
   }
 
   @override
