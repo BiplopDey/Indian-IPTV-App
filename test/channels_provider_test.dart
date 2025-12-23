@@ -3,10 +3,15 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ip_tv/model/channel.dart';
 import 'package:ip_tv/provider/channels_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yaml/yaml.dart';
 
 void main() {
   group('ChannelsProvider helpers', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
     test('extractChannelName returns the last comma segment', () {
       final provider = ChannelsProvider();
       const line = '#EXTINF:-1,My Channel HD';
@@ -56,6 +61,58 @@ void main() {
     test('getDefaultLogoUrl returns the asset path', () {
       final provider = ChannelsProvider();
       expect(provider.getDefaultLogoUrl(), 'assets/images/tv-icon.png');
+    });
+
+    test('saveChannelOrder persists preferred names', () async {
+      final provider = ChannelsProvider();
+      final ordered = [
+        Channel(
+          name: 'Custom One',
+          logoUrl: 'logo1',
+          streamUrl: 'stream1',
+        ),
+        Channel(
+          name: 'News Two',
+          logoUrl: 'logo2',
+          streamUrl: 'stream2',
+        ),
+      ];
+
+      await provider.saveChannelOrder(ordered);
+      final loaded = await provider.loadPreferredChannelNames();
+      expect(loaded, ['Custom One', 'News Two']);
+    });
+
+    test('addCustomChannel persists custom channels', () async {
+      final provider = ChannelsProvider();
+      await provider.addCustomChannel(
+        Channel(
+          name: 'Local Stream',
+          logoUrl: 'logo',
+          streamUrl: 'https://example.com/stream.m3u8',
+          groupTitle: 'Local',
+        ),
+      );
+
+      final reloaded = await provider.loadCustomChannels();
+      expect(reloaded.length, 1);
+      expect(reloaded.first.name, 'Local Stream');
+      expect(reloaded.first.streamUrl, 'https://example.com/stream.m3u8');
+    });
+
+    test('removeCustomChannelByName removes custom channels', () async {
+      final provider = ChannelsProvider();
+      await provider.addCustomChannel(
+        Channel(
+          name: 'Local Stream',
+          logoUrl: 'logo',
+          streamUrl: 'https://example.com/stream.m3u8',
+        ),
+      );
+
+      await provider.removeCustomChannelByName('Local Stream');
+      final reloaded = await provider.loadCustomChannels();
+      expect(reloaded, isEmpty);
     });
 
     test('loadFilteredChannelNames reads names from the filtered asset', () async {

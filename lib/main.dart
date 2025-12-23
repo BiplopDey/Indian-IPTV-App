@@ -14,11 +14,7 @@ class _M3UPlayerState extends State<M3UPlayer> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Live Tv',
-      home: Scaffold(
-          appBar: AppBar(
-            title: const Text('Channel List'),
-          ),
-          body: const Home()),
+      home: const Home(),
     );
   }
 }

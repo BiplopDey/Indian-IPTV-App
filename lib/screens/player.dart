@@ -1,4 +1,5 @@
 import 'package:chewie/chewie.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -187,6 +188,9 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
             const _PreviousChannelIntent(),
         LogicalKeySet(LogicalKeyboardKey.arrowDown):
             const _NextChannelIntent(),
+        if (kIsWeb)
+          LogicalKeySet(LogicalKeyboardKey.escape):
+              const _ExitPlayerIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -199,6 +203,12 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
           _NextChannelIntent: CallbackAction<_NextChannelIntent>(
             onInvoke: (intent) {
               _changeChannel(_currentIndex + 1);
+              return null;
+            },
+          ),
+          _ExitPlayerIntent: CallbackAction<_ExitPlayerIntent>(
+            onInvoke: (intent) {
+              Navigator.of(context).maybePop();
               return null;
             },
           ),
@@ -234,4 +244,8 @@ class _PreviousChannelIntent extends Intent {
 
 class _NextChannelIntent extends Intent {
   const _NextChannelIntent();
+}
+
+class _ExitPlayerIntent extends Intent {
+  const _ExitPlayerIntent();
 }
