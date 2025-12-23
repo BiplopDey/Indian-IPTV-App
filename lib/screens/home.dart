@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '/screens/player.dart';
 import '../model/channel.dart';
 import '../provider/channels_provider.dart';
@@ -19,27 +20,51 @@ class _HomeState extends State<Home> {
   List<Channel> filteredChannels = [];
   TextEditingController searchController = TextEditingController();
   final ChannelsProvider channelsProvider = ChannelsProvider();
+  String? _appVersion;
   bool _isLoading = true;
   Timer? _debounceTimer;
   bool _autoOpened = false;
   bool _isReordering = false;
+  bool _isLaunchingPlayer = false;
   Future<List<Channel>>? _remoteChannelsFuture;
 
   @override
   void initState() {
     super.initState();
+    _loadAppVersion();
     fetchData();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _appVersion = '${info.version}+${info.buildNumber}';
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _appVersion = null;
+      });
+    }
   }
 
   Future<void> fetchData() async {
     try {
       final data = await channelsProvider.fetchM3UFile();
+      final shouldAutoOpen = !_autoOpened && data.isNotEmpty;
       setState(() {
         channels = data;
         filteredChannels = data;
-        _isLoading = false;
+        _isLoading = !shouldAutoOpen;
+        _isLaunchingPlayer = shouldAutoOpen;
       });
-      if (!_autoOpened && data.isNotEmpty) {
+      if (shouldAutoOpen) {
         _autoOpened = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) {
@@ -53,7 +78,15 @@ class _HomeState extends State<Home> {
                 initialIndex: 0,
               ),
             ),
-          );
+          ).then((_) {
+            if (!mounted) {
+              return;
+            }
+            setState(() {
+              _isLaunchingPlayer = false;
+              _isLoading = false;
+            });
+          });
         });
       }
     } catch (e) {
@@ -323,6 +356,18 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLaunchingPlayer) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Image.asset(
+            'assets/images/tv-icon.png',
+            width: 140,
+            height: 140,
+          ),
+        ),
+      );
+    }
     final List<Widget> sections = [];
     if (!_isTv) {
       sections.add(
@@ -445,6 +490,17 @@ class _HomeState extends State<Home> {
       ),
       body: Column(
         children: sections,
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            'v${_appVersion ?? '...'} (c) ${DateTime.now().year}',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
       ),
     );
   }

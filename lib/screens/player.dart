@@ -17,7 +17,7 @@ class Player extends StatefulWidget {
   _PlayerState createState() => _PlayerState();
 }
 
-class _PlayerState extends State<Player> with WidgetsBindingObserver {
+class _PlayerState extends State<Player> {
   VideoPlayerController? videoPlayerController;
   ChewieController? chewieController;
   late int _currentIndex;
@@ -25,12 +25,10 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
   final FocusNode _focusNode = FocusNode();
   bool _isLoading = true;
   bool _channelNotFound = false;
-  bool _wasPlayingBeforePause = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _currentIndex = widget.initialIndex;
     _loadChannel(_currentIndex);
@@ -139,35 +137,10 @@ class _PlayerState extends State<Player> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _disposeControllers();
     _focusNode.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final controller = videoPlayerController;
-    if (controller == null || !controller.value.isInitialized) {
-      return;
-    }
-    switch (state) {
-      case AppLifecycleState.inactive:
-      case AppLifecycleState.paused:
-      case AppLifecycleState.detached:
-      case AppLifecycleState.hidden:
-        _wasPlayingBeforePause = controller.value.isPlaying;
-        controller.pause();
-        WakelockPlus.disable();
-        break;
-      case AppLifecycleState.resumed:
-        if (_wasPlayingBeforePause) {
-          controller.play();
-        }
-        _wasPlayingBeforePause = false;
-        break;
-    }
   }
 
   @override
