@@ -46,7 +46,8 @@ void main() {
       expect(assetsPort.loadCalls, 1);
     });
 
-    test('fetchRemoteIndex caches responses and respects forceRefresh', () async {
+    test('fetchRemoteIndex caches responses and respects forceRefresh',
+        () async {
       const playlist = '''
 #EXTM3U
 #EXTINF:-1,Channel One

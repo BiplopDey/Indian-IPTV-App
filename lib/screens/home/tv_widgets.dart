@@ -67,8 +67,7 @@ class _TvRailItemState extends State<TvRailItem> {
               child: Text(
                 widget.label,
                 style: GoogleFonts.spaceGrotesk(
-                  color:
-                      enabled ? Colors.white : Colors.white.withAlpha(128),
+                  color: enabled ? Colors.white : Colors.white.withAlpha(128),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -213,11 +212,10 @@ class _TvHeroCardState extends State<TvHeroCard> {
                     ),
                     const SizedBox(height: 10),
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color:
-                            _focused ? tvAccent : Colors.white.withAlpha(26),
+                        color: _focused ? tvAccent : Colors.white.withAlpha(26),
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: Text(

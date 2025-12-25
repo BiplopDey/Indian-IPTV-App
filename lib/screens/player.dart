@@ -75,9 +75,7 @@ class _PlayerState extends State<Player> {
       return;
     }
 
-    if (_isTv &&
-        !kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android) {
+    if (_isTv && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       _nativeStreamUrl = channel.streamUrl;
       _nativeViewKey++;
       WakelockPlus.enable();
@@ -230,8 +228,7 @@ class _PlayerState extends State<Player> {
   }
 
   Widget _buildTvOverlay(Channel channel) {
-    final bool overlayVisible =
-        _showOverlay || _isLoading || _channelNotFound;
+    final bool overlayVisible = _showOverlay || _isLoading || _channelNotFound;
     final String groupTitle = channel.groupTitle.trim();
     return IgnorePointer(
       ignoring: true,
@@ -407,8 +404,7 @@ class _PlayerState extends State<Player> {
       surfaceFactory: (context, controller) {
         return AndroidViewSurface(
           controller: controller as AndroidViewController,
-          gestureRecognizers:
-              const <Factory<OneSequenceGestureRecognizer>>{},
+          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
           hitTestBehavior: PlatformViewHitTestBehavior.opaque,
         );
       },
@@ -422,8 +418,8 @@ class _PlayerState extends State<Player> {
           },
           creationParamsCodec: const StandardMessageCodec(),
         );
-        controller.addOnPlatformViewCreatedListener(
-            params.onPlatformViewCreated);
+        controller
+            .addOnPlatformViewCreatedListener(params.onPlatformViewCreated);
         controller.create();
         return controller;
       },
@@ -455,19 +451,17 @@ class _PlayerState extends State<Player> {
       shortcuts: <LogicalKeySet, Intent>{
         LogicalKeySet(LogicalKeyboardKey.arrowUp):
             const _PreviousChannelIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown):
-            const _NextChannelIntent(),
-        LogicalKeySet(LogicalKeyboardKey.channelUp):
-            const _NextChannelIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown): const _NextChannelIntent(),
+        LogicalKeySet(LogicalKeyboardKey.channelUp): const _NextChannelIntent(),
         LogicalKeySet(LogicalKeyboardKey.channelDown):
             const _PreviousChannelIntent(),
         LogicalKeySet(LogicalKeyboardKey.select): const _ShowOverlayIntent(),
         LogicalKeySet(LogicalKeyboardKey.enter): const _ShowOverlayIntent(),
-        LogicalKeySet(LogicalKeyboardKey.numpadEnter): const _ShowOverlayIntent(),
+        LogicalKeySet(LogicalKeyboardKey.numpadEnter):
+            const _ShowOverlayIntent(),
         LogicalKeySet(LogicalKeyboardKey.info): const _ShowOverlayIntent(),
         if (kIsWeb)
-          LogicalKeySet(LogicalKeyboardKey.escape):
-              const _ExitPlayerIntent(),
+          LogicalKeySet(LogicalKeyboardKey.escape): const _ExitPlayerIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{

@@ -23,8 +23,7 @@ void main() {
     test('fetchM3UFile merges saved order with custom channels', () async {
       final filteredNames =
           _loadYamlNames('assets/filtered_ordered_channels.yml');
-      final allNames =
-          _loadYamlNames('assets/all_channels_available.yml');
+      final allNames = _loadYamlNames('assets/all_channels_available.yml');
       expect(filteredNames, isNotEmpty);
       expect(allNames, isNotEmpty);
 

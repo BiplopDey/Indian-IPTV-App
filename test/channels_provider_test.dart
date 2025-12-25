@@ -20,8 +20,7 @@ void main() {
 
     test('extractLogoUrl returns the first valid quoted URL', () {
       final provider = ChannelsProvider();
-      const line =
-          '#EXTINF:-1 tvg-logo="https://example.com/logo.png",Channel';
+      const line = '#EXTINF:-1 tvg-logo="https://example.com/logo.png",Channel';
       expect(provider.extractLogoUrl(line), 'https://example.com/logo.png');
     });
 
@@ -115,7 +114,8 @@ void main() {
       expect(reloaded, isEmpty);
     });
 
-    test('loadFilteredChannelNames reads names from the filtered asset', () async {
+    test('loadFilteredChannelNames reads names from the filtered asset',
+        () async {
       TestWidgetsFlutterBinding.ensureInitialized();
       final provider = ChannelsProvider();
       final loaded = await provider.loadFilteredChannelNames();

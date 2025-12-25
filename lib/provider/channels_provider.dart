@@ -122,8 +122,7 @@ class ChannelsProvider with ChangeNotifier {
     if (key.isEmpty) {
       return;
     }
-    customChannels.removeWhere(
-        (entry) => normalizeName(entry.name) == key);
+    customChannels.removeWhere((entry) => normalizeName(entry.name) == key);
     customChannels.add(channel);
     await _catalog.saveCustomChannels(_customChannelsKey, customChannels);
   }
@@ -134,8 +133,7 @@ class ChannelsProvider with ChangeNotifier {
       return;
     }
     final before = customChannels.length;
-    customChannels
-        .removeWhere((entry) => normalizeName(entry.name) == key);
+    customChannels.removeWhere((entry) => normalizeName(entry.name) == key);
     if (customChannels.length != before) {
       await _catalog.saveCustomChannels(_customChannelsKey, customChannels);
     }

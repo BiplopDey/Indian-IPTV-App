@@ -262,13 +262,10 @@ class _HomeState extends State<Home> {
                 child: const Text('Clear selection'),
               ),
               ElevatedButton(
-                onPressed: selectedKeys.isEmpty
-                    ? null
-                    : () => Navigator.pop(context),
+                onPressed:
+                    selectedKeys.isEmpty ? null : () => Navigator.pop(context),
                 child: Text(
-                  selectedKeys.isEmpty
-                      ? 'Add'
-                      : 'Add (${selectedKeys.length})',
+                  selectedKeys.isEmpty ? 'Add' : 'Add (${selectedKeys.length})',
                 ),
               ),
             ],
@@ -408,8 +405,7 @@ class _HomeState extends State<Home> {
         flavor: AppConfig.target,
         onAddChannel: _showAddChannelDialog,
         onRefresh: fetchData,
-        onChannelSelected: (index) =>
-            _launchPlayer(filteredChannels, index),
+        onChannelSelected: (index) => _launchPlayer(filteredChannels, index),
         scrollController: _tvScrollController,
       );
     }
