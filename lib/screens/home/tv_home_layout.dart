@@ -12,6 +12,7 @@ class TvHomeLayout extends StatelessWidget {
   final String? version;
   final String flavor;
   final VoidCallback? onAddChannel;
+  final VoidCallback? onManageChannels;
   final VoidCallback? onRefresh;
   final ValueChanged<int> onChannelSelected;
   final ScrollController scrollController;
@@ -24,6 +25,7 @@ class TvHomeLayout extends StatelessWidget {
     required this.onChannelSelected,
     required this.scrollController,
     this.onAddChannel,
+    this.onManageChannels,
     this.onRefresh,
     super.key,
   });
@@ -93,6 +95,7 @@ class TvHomeLayout extends StatelessWidget {
 
   Widget _buildRail(BuildContext context) {
     final VoidCallback? addHandler = isLoading ? null : onAddChannel;
+    final VoidCallback? manageHandler = isLoading ? null : onManageChannels;
     final VoidCallback? refreshHandler = isLoading ? null : onRefresh;
     return Container(
       width: 240,
@@ -127,16 +130,16 @@ class TvHomeLayout extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const TvRailItem(
-            icon: Icons.live_tv,
-            label: 'Live Channels',
-            selected: true,
-          ),
-          const SizedBox(height: 12),
           TvRailItem(
             icon: Icons.add_circle_outline,
             label: 'Add Channels',
             onActivate: addHandler,
+          ),
+          const SizedBox(height: 12),
+          TvRailItem(
+            icon: Icons.tune,
+            label: 'Manage Channels',
+            onActivate: manageHandler,
           ),
           const SizedBox(height: 12),
           TvRailItem(
@@ -150,6 +153,14 @@ class TvHomeLayout extends StatelessWidget {
             style: GoogleFonts.spaceGrotesk(
               color: tvTextMuted,
               fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            version == null ? 'Flavor: $flavor' : 'v$version • $flavor',
+            style: GoogleFonts.spaceGrotesk(
+              color: tvTextMuted,
+              fontSize: 11,
             ),
           ),
         ],
@@ -178,8 +189,6 @@ class TvHomeLayout extends StatelessWidget {
           TvInfoPanel(
             isLoading: isLoading,
             channelCount: channels.length,
-            version: version,
-            flavor: flavor,
           ),
         ],
       ),
@@ -284,23 +293,7 @@ class TvHomeLayout extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Channel Hub',
-                              style: GoogleFonts.spaceGrotesk(
-                                color: Colors.white,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Lean back and browse live channels',
-                              style: GoogleFonts.spaceGrotesk(
-                                color: tvTextMuted,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 4),
                             _buildHero(),
                             const SizedBox(height: 24),
                             Text(

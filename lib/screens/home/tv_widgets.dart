@@ -241,14 +241,10 @@ class _TvHeroCardState extends State<TvHeroCard> {
 class TvInfoPanel extends StatelessWidget {
   final bool isLoading;
   final int channelCount;
-  final String? version;
-  final String flavor;
 
   const TvInfoPanel({
     required this.isLoading,
     required this.channelCount,
-    required this.version,
-    required this.flavor,
     super.key,
   });
 
@@ -303,23 +299,270 @@ class TvInfoPanel extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            version == null ? 'Version unavailable' : 'v$version • $flavor',
-            style: GoogleFonts.spaceGrotesk(
-              color: tvTextMuted,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Flavor: $flavor',
-            style: GoogleFonts.spaceGrotesk(
-              color: tvTextMuted,
-              fontSize: 12,
-            ),
-          ),
         ],
+      ),
+    );
+  }
+}
+
+class TvDialogFrame extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final List<Widget> actions;
+
+  const TvDialogFrame({
+    required this.title,
+    required this.child,
+    required this.actions,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 960),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: tvCard,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withAlpha(18)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(140),
+              blurRadius: 30,
+              offset: const Offset(0, 18),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.spaceGrotesk(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            child,
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: actions
+                  .map((action) => Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: action,
+                      ))
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TvActionButton extends StatefulWidget {
+  final String label;
+  final VoidCallback? onActivate;
+  final bool primary;
+
+  const TvActionButton({
+    required this.label,
+    this.onActivate,
+    this.primary = false,
+    super.key,
+  });
+
+  @override
+  State<TvActionButton> createState() => _TvActionButtonState();
+}
+
+class _TvActionButtonState extends State<TvActionButton> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool enabled = widget.onActivate != null;
+    final Color borderColor = _focused
+        ? (widget.primary ? tvAccent : Colors.white)
+        : Colors.white.withAlpha(30);
+    final Color background = widget.primary
+        ? (_focused ? tvAccent : tvAccent.withAlpha(190))
+        : (_focused ? Colors.white.withAlpha(24) : Colors.white.withAlpha(12));
+    final Color labelColor = widget.primary ? Colors.black : Colors.white;
+
+    return FocusableActionDetector(
+      onShowFocusHighlight: (value) {
+        setState(() {
+          _focused = value;
+        });
+      },
+      actions: <Type, Action<Intent>>{
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (intent) {
+            widget.onActivate?.call();
+            return null;
+          },
+        ),
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: enabled ? background : Colors.white.withAlpha(12),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor),
+        ),
+        child: Text(
+          widget.label,
+          style: GoogleFonts.spaceGrotesk(
+            color: enabled ? labelColor : Colors.white.withAlpha(80),
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TvChannelSelectTile extends StatefulWidget {
+  final Channel channel;
+  final bool selected;
+  final VoidCallback onToggle;
+
+  const TvChannelSelectTile({
+    required this.channel,
+    required this.selected,
+    required this.onToggle,
+    super.key,
+  });
+
+  @override
+  State<TvChannelSelectTile> createState() => _TvChannelSelectTileState();
+}
+
+class _TvChannelSelectTileState extends State<TvChannelSelectTile> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final channel = widget.channel;
+    final logoUrl = channel.logoUrl.trim();
+    final group = channel.groupTitle.trim();
+    return FocusableActionDetector(
+      onShowFocusHighlight: (value) {
+        setState(() {
+          _focused = value;
+        });
+      },
+      actions: <Type, Action<Intent>>{
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (intent) {
+            widget.onToggle();
+            return null;
+          },
+        ),
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: _focused ? tvCardFocused : Colors.black.withAlpha(55),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _focused
+                ? tvAccent
+                : (widget.selected
+                    ? tvAccent.withAlpha(160)
+                    : Colors.white.withAlpha(20)),
+            width: _focused ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: Colors.black.withAlpha(70),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: logoUrl.isEmpty
+                  ? Image.asset(
+                      'assets/images/tv-icon.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                    )
+                  : Image.network(
+                      logoUrl,
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/tv-icon.png',
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.contain,
+                        );
+                      },
+                    ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    channel.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.spaceGrotesk(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (group.isNotEmpty)
+                    Text(
+                      group,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.spaceGrotesk(
+                        color: tvTextMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.selected ? tvAccent : Colors.white.withAlpha(16),
+                border: Border.all(
+                  color:
+                      widget.selected ? tvAccent : Colors.white.withAlpha(40),
+                ),
+              ),
+              child: widget.selected
+                  ? const Icon(Icons.check, color: Colors.black, size: 18)
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }

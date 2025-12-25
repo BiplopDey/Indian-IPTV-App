@@ -70,9 +70,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Channel Hub'), findsOneWidget);
-    expect(find.text('Live Channels'), findsOneWidget);
+    expect(find.text('Live TV'), findsOneWidget);
+    expect(find.text('Add Channels'), findsOneWidget);
+    expect(find.text('Manage Channels'), findsOneWidget);
     expect(find.text('All Channels'), findsOneWidget);
+    expect(find.text('Live Now'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     expect(find.text('Alpha TV'), findsWidgets);
     expect(find.text('Flavor: tv'), findsOneWidget);
@@ -90,6 +92,7 @@ void main() {
           isLoading: true,
           version: '2.1.9+12',
           flavor: 'tv',
+          onManageChannels: null,
           onChannelSelected: (_) {},
           scrollController: controller,
         ),
