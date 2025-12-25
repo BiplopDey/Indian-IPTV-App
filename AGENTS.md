@@ -84,7 +84,7 @@ Testing expectations:
 
 ## Pre-finish commands
 
-Run before marking a task complete:
+Run before marking a task complete only when code is modified (skip for docs-only changes):
 
 ```
 /home/biplop/flutter/bin/flutter pub get
