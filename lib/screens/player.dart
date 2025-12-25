@@ -165,7 +165,6 @@ class _PlayerState extends State<Player> {
     });
     _showOverlayFor(const Duration(seconds: 4));
     _loadChannel(normalizedIndex);
-    _showOverlayFor(const Duration(seconds: 4));
   }
 
   void _showOverlayFor(Duration duration) {
@@ -478,15 +477,6 @@ class _PlayerState extends State<Player> {
           _NextChannelIntent: CallbackAction<_NextChannelIntent>(
             onInvoke: (intent) {
               _changeChannel(_currentIndex + 1);
-              return null;
-            },
-          ),
-          _ShowOverlayIntent: CallbackAction<_ShowOverlayIntent>(
-            onInvoke: (intent) {
-              _showOverlayFor(const Duration(seconds: 4));
-          _ExitPlayerIntent: CallbackAction<_ExitPlayerIntent>(
-            onInvoke: (intent) {
-              Navigator.of(context).maybePop();
               return null;
             },
           ),
