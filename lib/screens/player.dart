@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import '../config/app_config.dart';
 import '../domain/entities/channel.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -14,16 +15,18 @@ class Player extends StatefulWidget {
   final List<Channel> channels;
   final int initialIndex;
 
-  const Player({required this.channels, required this.initialIndex, Key? key})
-      : super(key: key);
+  const Player({
+    required this.channels,
+    required this.initialIndex,
+    super.key,
+  });
 
   @override
-  _PlayerState createState() => _PlayerState();
+  State<Player> createState() => _PlayerState();
 }
 
 class _PlayerState extends State<Player> {
-  final bool _isTv =
-      const String.fromEnvironment('TARGET', defaultValue: 'mobile') == 'tv';
+  bool get _isTv => AppConfig.isTv;
   VideoPlayerController? videoPlayerController;
   ChewieController? chewieController;
   late int _currentIndex;
@@ -245,10 +248,10 @@ class _PlayerState extends State<Player> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withAlpha(166),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withAlpha(38),
                     width: 1,
                   ),
                 ),
@@ -301,15 +304,15 @@ class _PlayerState extends State<Player> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withAlpha(166),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.redAccent.withOpacity(0.8),
+                    color: Colors.redAccent.withAlpha(204),
                     width: 1.2,
                   ),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.fiber_manual_record,
                         color: Colors.redAccent, size: 12),
                     SizedBox(width: 6),
@@ -331,12 +334,12 @@ class _PlayerState extends State<Player> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withAlpha(179),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       SizedBox(
                         width: 28,
                         height: 28,
@@ -363,12 +366,12 @@ class _PlayerState extends State<Player> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withAlpha(179),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.tv_off, color: Colors.white70, size: 34),
                       SizedBox(height: 12),
                       Text(

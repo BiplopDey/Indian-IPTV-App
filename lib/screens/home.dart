@@ -3,23 +3,31 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '/screens/player.dart';
+import '../config/app_config.dart';
 import '../domain/entities/channel.dart';
 import '../provider/channels_provider.dart';
+import 'home/tv_home_layout.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  final ChannelsProvider? provider;
+  final bool autoLaunchPlayer;
+
+  const Home({
+    super.key,
+    this.provider,
+    this.autoLaunchPlayer = true,
+  });
 
   @override
-  _HomeState createState() => _HomeState();
+  State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  final bool _isTv =
-      const String.fromEnvironment('TARGET', defaultValue: 'mobile') == 'tv';
+  bool get _isTv => AppConfig.isTv;
   List<Channel> channels = [];
   List<Channel> filteredChannels = [];
   TextEditingController searchController = TextEditingController();
-  final ChannelsProvider channelsProvider = ChannelsProvider();
+  late final ChannelsProvider channelsProvider;
   String? _appVersion;
   bool _isLoading = true;
   Timer? _debounceTimer;
@@ -27,10 +35,12 @@ class _HomeState extends State<Home> {
   bool _isReordering = false;
   bool _isLaunchingPlayer = false;
   Future<List<Channel>>? _remoteChannelsFuture;
+  final ScrollController _tvScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    channelsProvider = widget.provider ?? ChannelsProvider();
     _loadAppVersion();
     fetchData();
   }
@@ -57,11 +67,12 @@ class _HomeState extends State<Home> {
   Future<void> fetchData() async {
     try {
       final data = await channelsProvider.fetchM3UFile();
-      final shouldAutoOpen = !_autoOpened && data.isNotEmpty;
+      final shouldAutoOpen =
+          !_autoOpened && data.isNotEmpty && widget.autoLaunchPlayer;
       setState(() {
         channels = data;
         filteredChannels = data;
-        _isLoading = !shouldAutoOpen;
+        _isLoading = false;
         _isLaunchingPlayer = shouldAutoOpen;
       });
       if (shouldAutoOpen) {
@@ -90,8 +101,14 @@ class _HomeState extends State<Home> {
         });
       }
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('There was a problem finding the data')));
+        const SnackBar(
+          content: Text('There was a problem finding the data'),
+        ),
+      );
     }
   }
 
@@ -351,7 +368,22 @@ class _HomeState extends State<Home> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    searchController.dispose();
+    _tvScrollController.dispose();
     super.dispose();
+  }
+
+  void _launchPlayer(List<Channel> list, int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Player(
+          channels: list,
+          initialIndex: index,
+        ),
+      ),
+    );
   }
 
   @override
@@ -366,6 +398,19 @@ class _HomeState extends State<Home> {
             height: 140,
           ),
         ),
+      );
+    }
+    if (_isTv) {
+      return TvHomeLayout(
+        channels: filteredChannels,
+        isLoading: _isLoading,
+        version: _appVersion,
+        flavor: AppConfig.target,
+        onAddChannel: _showAddChannelDialog,
+        onRefresh: fetchData,
+        onChannelSelected: (index) =>
+            _launchPlayer(filteredChannels, index),
+        scrollController: _tvScrollController,
       );
     }
     final List<Widget> sections = [];
@@ -496,7 +541,7 @@ class _HomeState extends State<Home> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
-            'v${_appVersion ?? '...'} (c) ${DateTime.now().year}',
+            'v${_appVersion ?? '...'} • ${AppConfig.target} (c) ${DateTime.now().year}',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
