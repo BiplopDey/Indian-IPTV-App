@@ -206,3 +206,7 @@ Testing expectations:
 
 - Introduced hexagonal structure with domain/application/adapters boundaries.
 - Added unit tests for playlist parsing, normalization, and catalog merging.
+
+## Change history
+
+All significant changes should be recorded in `HISTORY.md`.
