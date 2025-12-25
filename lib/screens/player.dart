@@ -150,17 +150,22 @@ class _PlayerState extends State<Player> {
   }
 
   void _changeChannel(int newIndex) {
-    if (newIndex < 0 || newIndex >= widget.channels.length) {
+    final totalChannels = widget.channels.length;
+    if (totalChannels == 0) {
       return;
     }
-    if (newIndex == _currentIndex) {
+    final wrappedIndex = newIndex % totalChannels;
+    final normalizedIndex =
+        wrappedIndex < 0 ? wrappedIndex + totalChannels : wrappedIndex;
+    if (normalizedIndex == _currentIndex) {
       return;
     }
     setState(() {
-      _currentIndex = newIndex;
+      _currentIndex = normalizedIndex;
     });
     _showOverlayFor(const Duration(seconds: 4));
-    _loadChannel(newIndex);
+    _loadChannel(normalizedIndex);
+    _showOverlayFor(const Duration(seconds: 4));
   }
 
   void _showOverlayFor(Duration duration) {
@@ -458,6 +463,9 @@ class _PlayerState extends State<Player> {
         LogicalKeySet(LogicalKeyboardKey.enter): const _ShowOverlayIntent(),
         LogicalKeySet(LogicalKeyboardKey.numpadEnter): const _ShowOverlayIntent(),
         LogicalKeySet(LogicalKeyboardKey.info): const _ShowOverlayIntent(),
+        if (kIsWeb)
+          LogicalKeySet(LogicalKeyboardKey.escape):
+              const _ExitPlayerIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -476,6 +484,21 @@ class _PlayerState extends State<Player> {
           _ShowOverlayIntent: CallbackAction<_ShowOverlayIntent>(
             onInvoke: (intent) {
               _showOverlayFor(const Duration(seconds: 4));
+          _ExitPlayerIntent: CallbackAction<_ExitPlayerIntent>(
+            onInvoke: (intent) {
+              Navigator.of(context).maybePop();
+              return null;
+            },
+          ),
+          _ShowOverlayIntent: CallbackAction<_ShowOverlayIntent>(
+            onInvoke: (intent) {
+              _showOverlayFor(const Duration(seconds: 4));
+              return null;
+            },
+          ),
+          _ExitPlayerIntent: CallbackAction<_ExitPlayerIntent>(
+            onInvoke: (intent) {
+              Navigator.of(context).maybePop();
               return null;
             },
           ),
@@ -522,4 +545,8 @@ class _NextChannelIntent extends Intent {
 
 class _ShowOverlayIntent extends Intent {
   const _ShowOverlayIntent();
+}
+
+class _ExitPlayerIntent extends Intent {
+  const _ExitPlayerIntent();
 }

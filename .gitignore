@@ -30,7 +30,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-/artifacts/
+artifacts/
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +43,4 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+AGENT.md
