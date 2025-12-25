@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ip_tv/data/channel_repository.dart';
+import 'package:ip_tv/data/playlist_client.dart';
+import 'package:ip_tv/data/playlist_parser.dart';
 import 'package:ip_tv/model/channel.dart';
 import 'package:ip_tv/provider/channels_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,23 +57,34 @@ void main() {
         ],
       );
 
-      final previousOverrides = HttpOverrides.current;
-      HttpOverrides.global = null;
-      try {
-        final result = await provider.fetchM3UFile();
-        expect(result.length, greaterThanOrEqualTo(3));
-        final orderedResultNames = result.take(3).map((c) => c.name).toList();
-        expect(orderedResultNames, [
-          customChannel.name,
-          orderedNames[0],
-          orderedNames[1],
-        ]);
-        expect(result.first.streamUrl, customChannel.streamUrl);
-        final firstRemote = result[1];
-        expect(firstRemote.streamUrl.trim().isNotEmpty, isTrue);
-      } finally {
-        HttpOverrides.global = previousOverrides;
-      }
+      final playlistText = _buildPlaylistFor(orderedNames);
+      final repository = ChannelRepository(
+        playlistClient: _FakePlaylistClient(playlistText),
+        playlistParser: PlaylistParser(),
+      );
+      final testProvider = ChannelsProvider(repository: repository);
+      await testProvider.addCustomChannel(customChannel);
+      await testProvider.saveChannelOrder([
+        customChannel,
+        for (final name in orderedNames)
+          Channel(
+            name: name,
+            logoUrl: 'logo',
+            streamUrl: 'stream',
+          ),
+      ]);
+
+      final result = await testProvider.fetchM3UFile();
+      expect(result.length, greaterThanOrEqualTo(3));
+      final orderedResultNames = result.take(3).map((c) => c.name).toList();
+      expect(orderedResultNames, [
+        customChannel.name,
+        orderedNames[0],
+        orderedNames[1],
+      ]);
+      expect(result.first.streamUrl, customChannel.streamUrl);
+      final firstRemote = result[1];
+      expect(firstRemote.streamUrl.trim().isNotEmpty, isTrue);
     });
   });
 }
@@ -98,4 +112,23 @@ List<String> _loadYamlNames(String path) {
     result.add(name);
   }
   return result;
+}
+
+String _buildPlaylistFor(List<String> names) {
+  final buffer = StringBuffer('#EXTM3U\n');
+  for (var i = 0; i < names.length; i++) {
+    buffer.writeln(
+        '#EXTINF:-1 tvg-logo="https://example.com/logo.png" group-title="Test",${names[i]}');
+    buffer.writeln('https://example.com/${i + 1}.m3u8');
+  }
+  return buffer.toString();
+}
+
+class _FakePlaylistClient implements PlaylistClient {
+  _FakePlaylistClient(this._playlistText);
+
+  final String _playlistText;
+
+  @override
+  Future<String> fetchPlaylist(String url) async => _playlistText;
 }
