@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:yaml/yaml.dart';
 
-class ChannelAssetsLoader {
+import '../../domain/ports/channel_assets_port.dart';
+
+class AssetChannelNamesSource implements ChannelAssetsPort {
   Future<List<String>> loadNames(String assetPath) async {
     final raw = await rootBundle.loadString(assetPath);
     return parseNames(raw);

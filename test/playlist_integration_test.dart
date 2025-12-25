@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ip_tv/model/channel.dart';
+import 'package:ip_tv/domain/entities/channel.dart';
 import 'package:ip_tv/provider/channels_provider.dart';
 import 'package:yaml/yaml.dart';
 

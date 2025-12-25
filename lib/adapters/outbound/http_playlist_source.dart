@@ -1,11 +1,9 @@
 import 'package:http/http.dart' as http;
 
-abstract class PlaylistClient {
-  Future<String> fetchPlaylist(String url);
-}
+import '../../domain/ports/playlist_source_port.dart';
 
-class HttpPlaylistClient implements PlaylistClient {
-  HttpPlaylistClient({http.Client? client}) : _client = client ?? http.Client();
+class HttpPlaylistSource implements PlaylistSourcePort {
+  HttpPlaylistSource({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 

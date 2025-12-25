@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '/screens/player.dart';
-import '../model/channel.dart';
+import '../domain/entities/channel.dart';
 import '../provider/channels_provider.dart';
 
 class Home extends StatefulWidget {

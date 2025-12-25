@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../data/channel_repository.dart';
-import '../data/playlist_parser.dart';
-import '../model/channel.dart';
-import '../utils/channel_normalizer.dart';
+import '../adapters/outbound/asset_channel_names_source.dart';
+import '../adapters/outbound/http_playlist_source.dart';
+import '../adapters/outbound/shared_prefs_channel_store.dart';
+import '../application/channel_catalog_service.dart';
+import '../domain/entities/channel.dart';
+import '../domain/services/channel_normalizer.dart';
+import '../domain/services/playlist_parser.dart';
 
 class ChannelsProvider with ChangeNotifier {
   static const String playlistUrl =
@@ -20,17 +23,22 @@ class ChannelsProvider with ChangeNotifier {
 
   late final PlaylistParser _playlistParser;
   late final ChannelNormalizer _normalizer;
-  late final ChannelRepository _repository;
+  late final ChannelCatalogService _catalog;
 
   ChannelsProvider({
     PlaylistParser? playlistParser,
     ChannelNormalizer? normalizer,
-    ChannelRepository? repository,
+    ChannelCatalogService? catalog,
   }) {
     _playlistParser = playlistParser ?? PlaylistParser();
     _normalizer = normalizer ?? ChannelNormalizer();
-    _repository = repository ??
-        ChannelRepository(
+    final store = SharedPrefsChannelStore();
+    _catalog = catalog ??
+        ChannelCatalogService(
+          playlistSource: HttpPlaylistSource(),
+          assetsPort: AssetChannelNamesSource(),
+          orderPort: store,
+          customChannelsPort: store,
           playlistParser: _playlistParser,
           normalizer: _normalizer,
         );
@@ -39,11 +47,11 @@ class ChannelsProvider with ChangeNotifier {
   Future<List<Channel>> fetchM3UFile() async {
     final orderedNames = await loadPreferredChannelNames();
     customChannels = await loadCustomChannels();
-    final remoteIndex = await _repository.fetchRemoteIndex(
+    final remoteIndex = await _catalog.fetchRemoteIndex(
       playlistUrl: sourceUrl,
       defaultLogoUrl: getDefaultLogoUrl(),
     );
-    final result = _repository.mergeOrderedChannels(
+    final result = _catalog.mergeOrderedChannels(
       orderedNames: orderedNames,
       customChannels: customChannels,
       remoteIndex: remoteIndex,
@@ -87,18 +95,18 @@ class ChannelsProvider with ChangeNotifier {
   }
 
   Future<List<String>> loadFilteredChannelNames() async {
-    return _repository.loadFilteredNames(_filteredChannelsAsset);
+    return _catalog.loadFilteredNames(_filteredChannelsAsset);
   }
 
   Future<List<String>> loadPreferredChannelNames() async {
-    return _repository.loadPreferredNames(
+    return _catalog.loadPreferredNames(
       assetPath: _filteredChannelsAsset,
       orderKey: _orderKey,
     );
   }
 
   Future<List<Channel>> loadCustomChannels() async {
-    return _repository.loadCustomChannels(
+    return _catalog.loadCustomChannels(
       _customChannelsKey,
       defaultLogoUrl: getDefaultLogoUrl(),
     );
@@ -106,7 +114,7 @@ class ChannelsProvider with ChangeNotifier {
 
   Future<void> saveChannelOrder(List<Channel> ordered) async {
     final names = ordered.map((channel) => channel.name).toList();
-    await _repository.savePreferredNames(_orderKey, names);
+    await _catalog.savePreferredNames(_orderKey, names);
   }
 
   Future<void> addCustomChannel(Channel channel) async {
@@ -117,7 +125,7 @@ class ChannelsProvider with ChangeNotifier {
     customChannels.removeWhere(
         (entry) => normalizeName(entry.name) == key);
     customChannels.add(channel);
-    await _repository.saveCustomChannels(_customChannelsKey, customChannels);
+    await _catalog.saveCustomChannels(_customChannelsKey, customChannels);
   }
 
   Future<void> removeCustomChannelByName(String name) async {
@@ -129,12 +137,12 @@ class ChannelsProvider with ChangeNotifier {
     customChannels
         .removeWhere((entry) => normalizeName(entry.name) == key);
     if (customChannels.length != before) {
-      await _repository.saveCustomChannels(_customChannelsKey, customChannels);
+      await _catalog.saveCustomChannels(_customChannelsKey, customChannels);
     }
   }
 
   Future<List<Channel>> fetchRemoteChannels({bool forceRefresh = false}) {
-    return _repository.fetchRemoteChannelsSorted(
+    return _catalog.fetchRemoteChannelsSorted(
       playlistUrl: sourceUrl,
       defaultLogoUrl: getDefaultLogoUrl(),
       forceRefresh: forceRefresh,

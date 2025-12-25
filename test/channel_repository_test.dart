@@ -1,11 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ip_tv/data/channel_repository.dart';
-import 'package:ip_tv/model/channel.dart';
+import 'package:ip_tv/application/channel_catalog_service.dart';
+import 'package:ip_tv/domain/entities/channel.dart';
+import 'package:ip_tv/domain/ports/channel_assets_port.dart';
+import 'package:ip_tv/domain/ports/channel_order_port.dart';
+import 'package:ip_tv/domain/ports/custom_channels_port.dart';
+import 'package:ip_tv/domain/ports/playlist_source_port.dart';
 
 void main() {
-  group('ChannelRepository', () {
+  group('ChannelCatalogService', () {
     test('mergeOrderedChannels prefers custom and preserves order', () {
-      final repository = ChannelRepository();
+      final repository = ChannelCatalogService(
+        playlistSource: _NoopPlaylistSource(),
+        assetsPort: _NoopAssetsPort(),
+        orderPort: _NoopOrderPort(),
+        customChannelsPort: _NoopCustomChannelsPort(),
+      );
       final ordered = ['Channel One', 'Channel Two', 'Channel Three'];
       final custom = [
         Channel(
@@ -45,4 +54,34 @@ void main() {
       expect(result[3].name, 'Channel Extra');
     });
   });
+}
+
+class _NoopPlaylistSource implements PlaylistSourcePort {
+  @override
+  Future<String> fetchPlaylist(String url) async => '';
+}
+
+class _NoopAssetsPort implements ChannelAssetsPort {
+  @override
+  Future<List<String>> loadNames(String assetPath) async => [];
+}
+
+class _NoopOrderPort implements ChannelOrderPort {
+  @override
+  Future<List<String>> loadOrder(String key) async => [];
+
+  @override
+  Future<void> saveOrder(String key, List<String> names) async {}
+}
+
+class _NoopCustomChannelsPort implements CustomChannelsPort {
+  @override
+  Future<List<Channel>> loadCustomChannels(
+    String key, {
+    required String defaultLogoUrl,
+  }) async =>
+      [];
+
+  @override
+  Future<void> saveCustomChannels(String key, List<Channel> channels) async {}
 }

@@ -2,9 +2,13 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../model/channel.dart';
+import '../../domain/entities/channel.dart';
+import '../../domain/ports/channel_order_port.dart';
+import '../../domain/ports/custom_channels_port.dart';
 
-class ChannelPreferencesStore {
+class SharedPrefsChannelStore
+    implements ChannelOrderPort, CustomChannelsPort {
+  @override
   Future<List<String>> loadOrder(String key) async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getStringList(key);
@@ -14,11 +18,13 @@ class ChannelPreferencesStore {
     return stored;
   }
 
+  @override
   Future<void> saveOrder(String key, List<String> names) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(key, names);
   }
 
+  @override
   Future<List<Channel>> loadCustomChannels(
     String key, {
     required String defaultLogoUrl,
@@ -48,6 +54,7 @@ class ChannelPreferencesStore {
     return result;
   }
 
+  @override
   Future<void> saveCustomChannels(String key, List<Channel> channels) async {
     final prefs = await SharedPreferences.getInstance();
     final payload = jsonEncode(

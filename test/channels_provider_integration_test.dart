@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ip_tv/data/channel_repository.dart';
-import 'package:ip_tv/data/playlist_client.dart';
-import 'package:ip_tv/data/playlist_parser.dart';
-import 'package:ip_tv/model/channel.dart';
+import 'package:ip_tv/adapters/outbound/shared_prefs_channel_store.dart';
+import 'package:ip_tv/application/channel_catalog_service.dart';
+import 'package:ip_tv/domain/entities/channel.dart';
+import 'package:ip_tv/domain/ports/channel_assets_port.dart';
+import 'package:ip_tv/domain/ports/playlist_source_port.dart';
+import 'package:ip_tv/domain/services/channel_normalizer.dart';
+import 'package:ip_tv/domain/services/playlist_parser.dart';
 import 'package:ip_tv/provider/channels_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yaml/yaml.dart';
@@ -58,11 +61,16 @@ void main() {
       );
 
       final playlistText = _buildPlaylistFor(orderedNames);
-      final repository = ChannelRepository(
-        playlistClient: _FakePlaylistClient(playlistText),
+      final store = SharedPrefsChannelStore();
+      final catalog = ChannelCatalogService(
+        playlistSource: _FakePlaylistSource(playlistText),
+        assetsPort: _NoopAssetsPort(),
+        orderPort: store,
+        customChannelsPort: store,
         playlistParser: PlaylistParser(),
+        normalizer: ChannelNormalizer(),
       );
-      final testProvider = ChannelsProvider(repository: repository);
+      final testProvider = ChannelsProvider(catalog: catalog);
       await testProvider.addCustomChannel(customChannel);
       await testProvider.saveChannelOrder([
         customChannel,
@@ -124,11 +132,16 @@ String _buildPlaylistFor(List<String> names) {
   return buffer.toString();
 }
 
-class _FakePlaylistClient implements PlaylistClient {
-  _FakePlaylistClient(this._playlistText);
+class _FakePlaylistSource implements PlaylistSourcePort {
+  _FakePlaylistSource(this._playlistText);
 
   final String _playlistText;
 
   @override
   Future<String> fetchPlaylist(String url) async => _playlistText;
+}
+
+class _NoopAssetsPort implements ChannelAssetsPort {
+  @override
+  Future<List<String>> loadNames(String assetPath) async => [];
 }

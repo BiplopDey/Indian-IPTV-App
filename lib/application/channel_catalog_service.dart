@@ -1,28 +1,32 @@
-import '../model/channel.dart';
-import '../utils/channel_normalizer.dart';
-import 'channel_assets_loader.dart';
-import 'channel_preferences_store.dart';
-import 'playlist_client.dart';
-import 'playlist_parser.dart';
+import '../domain/entities/channel.dart';
+import '../domain/ports/channel_assets_port.dart';
+import '../domain/ports/channel_order_port.dart';
+import '../domain/ports/custom_channels_port.dart';
+import '../domain/ports/playlist_source_port.dart';
+import '../domain/services/channel_normalizer.dart';
+import '../domain/services/playlist_parser.dart';
 
-class ChannelRepository {
-  ChannelRepository({
-    PlaylistClient? playlistClient,
-    PlaylistParser? playlistParser,
-    ChannelAssetsLoader? assetsLoader,
-    ChannelPreferencesStore? preferencesStore,
+class ChannelCatalogService {
+  ChannelCatalogService({
+    required PlaylistSourcePort playlistSource,
+    required ChannelAssetsPort assetsPort,
+    required ChannelOrderPort orderPort,
+    required CustomChannelsPort customChannelsPort,
     ChannelNormalizer? normalizer,
-  })  : _playlistClient = playlistClient ?? HttpPlaylistClient(),
-        _playlistParser = playlistParser ?? PlaylistParser(),
-        _assetsLoader = assetsLoader ?? ChannelAssetsLoader(),
-        _preferencesStore = preferencesStore ?? ChannelPreferencesStore(),
-        _normalizer = normalizer ?? ChannelNormalizer();
+    PlaylistParser? playlistParser,
+  })  : _playlistSource = playlistSource,
+        _assetsPort = assetsPort,
+        _orderPort = orderPort,
+        _customChannelsPort = customChannelsPort,
+        _normalizer = normalizer ?? ChannelNormalizer(),
+        _playlistParser = playlistParser ?? PlaylistParser();
 
-  final PlaylistClient _playlistClient;
-  final PlaylistParser _playlistParser;
-  final ChannelAssetsLoader _assetsLoader;
-  final ChannelPreferencesStore _preferencesStore;
+  final PlaylistSourcePort _playlistSource;
+  final ChannelAssetsPort _assetsPort;
+  final ChannelOrderPort _orderPort;
+  final CustomChannelsPort _customChannelsPort;
   final ChannelNormalizer _normalizer;
+  final PlaylistParser _playlistParser;
 
   Map<String, Channel>? _remoteIndex;
   List<Channel>? _remoteChannels;
@@ -30,36 +34,36 @@ class ChannelRepository {
   String normalizeName(String value) => _normalizer.normalizeName(value);
 
   Future<List<String>> loadFilteredNames(String assetPath) {
-    return _assetsLoader.loadNames(assetPath);
+    return _assetsPort.loadNames(assetPath);
   }
 
   Future<List<String>> loadPreferredNames({
     required String assetPath,
     required String orderKey,
   }) async {
-    final stored = await _preferencesStore.loadOrder(orderKey);
+    final stored = await _orderPort.loadOrder(orderKey);
     if (stored.isNotEmpty) {
       return stored;
     }
-    return _assetsLoader.loadNames(assetPath);
+    return _assetsPort.loadNames(assetPath);
   }
 
   Future<void> savePreferredNames(String orderKey, List<String> names) {
-    return _preferencesStore.saveOrder(orderKey, names);
+    return _orderPort.saveOrder(orderKey, names);
   }
 
   Future<List<Channel>> loadCustomChannels(
     String key, {
     required String defaultLogoUrl,
   }) {
-    return _preferencesStore.loadCustomChannels(
+    return _customChannelsPort.loadCustomChannels(
       key,
       defaultLogoUrl: defaultLogoUrl,
     );
   }
 
   Future<void> saveCustomChannels(String key, List<Channel> channels) {
-    return _preferencesStore.saveCustomChannels(key, channels);
+    return _customChannelsPort.saveCustomChannels(key, channels);
   }
 
   Future<Map<String, Channel>> fetchRemoteIndex({
@@ -70,7 +74,7 @@ class ChannelRepository {
     if (!forceRefresh && _remoteIndex != null) {
       return _remoteIndex!;
     }
-    final text = await _playlistClient.fetchPlaylist(playlistUrl);
+    final text = await _playlistSource.fetchPlaylist(playlistUrl);
     final parsed =
         _playlistParser.parse(text, defaultLogoUrl: defaultLogoUrl);
     final index = <String, Channel>{};

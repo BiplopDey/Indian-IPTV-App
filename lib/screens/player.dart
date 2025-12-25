@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
-import '../model/channel.dart';
+import '../domain/entities/channel.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class Player extends StatefulWidget {

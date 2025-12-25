@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../model/channel.dart';
+import '../entities/channel.dart';
 
 class PlaylistParser {
   List<Channel> parse(String text, {required String defaultLogoUrl}) {

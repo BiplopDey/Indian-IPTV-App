@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ip_tv/utils/channel_normalizer.dart';
+import 'package:ip_tv/domain/services/channel_normalizer.dart';
 
 void main() {
   group('ChannelNormalizer', () {
