@@ -167,9 +167,42 @@ Optional arguments (GPU defaults to `host` in the script; use `swiftshader_indir
 ./run_tv_emulator.sh <avd_name> <gpu_mode> <memory_mb> <cores> <apk_path>
 ```
 
+## Architecture (Hexagonal)
+
+This project follows a hexagonal (ports & adapters) structure:
+
+```
+lib/domain/
+  entities/           # Pure domain models (no Flutter imports)
+  services/           # Pure domain logic (parsing, normalization, etc.)
+  ports/              # Interfaces for external I/O
+lib/application/
+  channel_catalog_service.dart  # Use cases / orchestration
+lib/adapters/
+  outbound/           # Implement ports (HTTP, assets, shared prefs)
+lib/provider/
+  channels_provider.dart        # UI adapter (depends on application)
+lib/screens/                     # Flutter UI
+```
+
+Rules of thumb:
+- **Domain** must stay pure Dart (no Flutter, no I/O).
+- **Application** depends on domain + ports only.
+- **Adapters** implement ports and can depend on Flutter/HTTP/SharedPreferences.
+- UI uses **ChannelsProvider**, which wires adapters into the application service.
+
+Adding new functionality:
+1) Define/extend a port in `lib/domain/ports/`.
+2) Implement it in `lib/adapters/outbound/`.
+3) Inject it into `ChannelCatalogService` (application).
+4) Use it from `ChannelsProvider` or other UI adapters.
+5) Add unit tests with **fake ports** (no network/FS).
+
+Testing expectations:
+- Domain + application logic should be unit-tested with fakes.
+- Integration tests may use real HTTP, but keep unit tests offline.
+
 ## Recent agent changes
 
-- Bumped app version to `2.1.5+8` in `pubspec.yaml`.
-- Built release APKs for mobile and TV, renamed with the version, and moved to `artifacts/`:
-  - `artifacts/app-mobile-release-2.1.5+8.apk`
-  - `artifacts/app-tv-release-2.1.5+8.apk`
+- Introduced hexagonal structure with domain/application/adapters boundaries.
+- Added unit tests for playlist parsing, normalization, and catalog merging.
