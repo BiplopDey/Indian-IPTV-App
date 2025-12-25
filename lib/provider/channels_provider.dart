@@ -4,13 +4,13 @@ import '../adapters/outbound/asset_channel_names_source.dart';
 import '../adapters/outbound/http_playlist_source.dart';
 import '../adapters/outbound/shared_prefs_channel_store.dart';
 import '../application/channel_catalog_service.dart';
+import '../config/app_config.dart';
 import '../domain/entities/channel.dart';
 import '../domain/services/channel_normalizer.dart';
 import '../domain/services/playlist_parser.dart';
 
 class ChannelsProvider with ChangeNotifier {
-  static const String playlistUrl =
-      'https://raw.githubusercontent.com/FunctionError/PiratesTv/main/combined_playlist.m3u';
+  static const String playlistUrl = AppConfig.playlistUrl;
   static const String _filteredChannelsAsset =
       'assets/filtered_ordered_channels.yml';
   static const String _customChannelsKey = 'custom_channels_v1';

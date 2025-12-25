@@ -1,0 +1,4 @@
+class AppConfig {
+  static const String playlistUrl =
+      'https://raw.githubusercontent.com/FunctionError/PiratesTv/main/combined_playlist.m3u';
+}
