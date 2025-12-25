@@ -325,6 +325,76 @@ class TvInfoPanel extends StatelessWidget {
   }
 }
 
+class TvLoadingCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const TvLoadingCard({
+    required this.title,
+    required this.subtitle,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 360,
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+      decoration: BoxDecoration(
+        color: tvCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(120),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/images/tv-icon.png',
+            width: 84,
+            height: 84,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.spaceGrotesk(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.spaceGrotesk(
+              color: tvTextMuted,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 18),
+          const SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.6,
+              valueColor: AlwaysStoppedAnimation<Color>(tvAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class TvChannelCard extends StatefulWidget {
   final Channel channel;
   final int indexLabel;

@@ -232,6 +232,23 @@ class TvHomeLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading && channels.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            _buildBackground(),
+            const Center(
+              child: TvLoadingCard(
+                title: 'Loading channels...',
+                subtitle: 'Preparing your live TV experience',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Shortcuts(
       shortcuts: <LogicalKeySet, Intent>{
         LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),

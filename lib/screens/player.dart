@@ -294,37 +294,6 @@ class _PlayerState extends State<Player> {
                 ),
               ),
             ),
-            Positioned(
-              right: 24,
-              top: 24,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withAlpha(166),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.redAccent.withAlpha(204),
-                    width: 1.2,
-                  ),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.fiber_manual_record,
-                        color: Colors.redAccent, size: 12),
-                    SizedBox(width: 6),
-                    Text(
-                      'LIVE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
             if (_isLoading)
               Center(
                 child: Container(

@@ -6,6 +6,7 @@ import 'package:ip_tv/config/app_config.dart';
 import 'package:ip_tv/domain/entities/channel.dart';
 import 'package:ip_tv/provider/channels_provider.dart';
 import 'package:ip_tv/screens/home.dart';
+import 'package:ip_tv/screens/home/tv_home_layout.dart';
 
 class _FakeChannelsProvider extends ChannelsProvider {
   final List<Channel> seed;
@@ -75,5 +76,28 @@ void main() {
     expect(find.byType(TextField), findsNothing);
     expect(find.text('Alpha TV'), findsWidgets);
     expect(find.text('Flavor: tv'), findsOneWidget);
+  });
+
+  testWidgets('TvHomeLayout shows loading card when empty and loading',
+      (WidgetTester tester) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TvHomeLayout(
+          channels: const [],
+          isLoading: true,
+          version: '2.1.9+12',
+          flavor: 'tv',
+          onChannelSelected: (_) {},
+          scrollController: controller,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Loading channels...'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }
