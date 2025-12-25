@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../domain/entities/channel.dart';
+import '../../../domain/entities/channel.dart';
 import 'tv_theme.dart';
 import 'tv_widgets.dart';
 
@@ -93,7 +93,7 @@ class TvHomeLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildRail(BuildContext context) {
+  Widget _buildRail() {
     final VoidCallback? addHandler = isLoading ? null : onAddChannel;
     final VoidCallback? manageHandler = isLoading ? null : onManageChannels;
     final VoidCallback? refreshHandler = isLoading ? null : onRefresh;
@@ -273,7 +273,7 @@ class TvHomeLayout extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRail(context),
+                  _buildRail(),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 24, 8, 0),

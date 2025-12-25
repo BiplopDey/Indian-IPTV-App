@@ -9,3 +9,4 @@
 - Split Android TV home UI into dedicated layout/widgets to keep Home focused.
 - Added a TV-friendly startup loading screen and removed the LIVE badge from the player overlay.
 - Adjusted TV navigation rail, moved version/flavor info, and added TV-styled manage/add dialogs.
+- Refactored Home into controller/state with atomic widgets and TV-specific subfolders.

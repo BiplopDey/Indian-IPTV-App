@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../domain/entities/channel.dart';
+import '../../../domain/entities/channel.dart';
 import 'tv_theme.dart';
 
 class TvRailItem extends StatefulWidget {
@@ -319,50 +319,63 @@ class TvDialogFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaSize = MediaQuery.of(context).size;
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 960),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: tvCard,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withAlpha(18)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(140),
-              blurRadius: 30,
-              offset: const Offset(0, 18),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : mediaSize.height - 48;
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 960,
+              maxHeight: maxHeight,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.spaceGrotesk(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: tvCard,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withAlpha(18)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(140),
+                    blurRadius: 30,
+                    offset: const Offset(0, 18),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.spaceGrotesk(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(child: child),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: actions
+                        .map((action) => Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: action,
+                            ))
+                        .toList(),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            child,
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: actions
-                  .map((action) => Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: action,
-                      ))
-                  .toList(),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
