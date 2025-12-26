@@ -6,8 +6,7 @@ import '../../domain/entities/channel.dart';
 import '../../domain/ports/channel_order_port.dart';
 import '../../domain/ports/custom_channels_port.dart';
 
-class SharedPrefsChannelStore
-    implements ChannelOrderPort, CustomChannelsPort {
+class SharedPrefsChannelStore implements ChannelOrderPort, CustomChannelsPort {
   @override
   Future<List<String>> loadOrder(String key) async {
     final prefs = await SharedPreferences.getInstance();
@@ -57,8 +56,8 @@ class SharedPrefsChannelStore
   @override
   Future<void> saveCustomChannels(String key, List<Channel> channels) async {
     final prefs = await SharedPreferences.getInstance();
-    final payload = jsonEncode(
-        channels.map((channel) => _channelToJson(channel)).toList());
+    final payload =
+        jsonEncode(channels.map((channel) => _channelToJson(channel)).toList());
     await prefs.setString(key, payload);
   }
 
@@ -82,10 +81,9 @@ class SharedPrefsChannelStore
           ? logoUrl.trim()
           : defaultLogoUrl,
       streamUrl: streamUrl.trim(),
-      groupTitle:
-          groupTitle is String && groupTitle.trim().isNotEmpty
-              ? groupTitle.trim()
-              : '',
+      groupTitle: groupTitle is String && groupTitle.trim().isNotEmpty
+          ? groupTitle.trim()
+          : '',
     );
   }
 

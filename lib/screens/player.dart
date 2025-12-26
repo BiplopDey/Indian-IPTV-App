@@ -7,23 +7,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
-import '../domain/entities/channel.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+
+import '../adapters/outbound/cast_client_factory.dart';
+import '../application/cast_session_service.dart';
+import '../config/app_config.dart';
+import '../domain/entities/cast_connection_state.dart';
+import '../domain/entities/cast_device.dart';
+import '../domain/entities/cast_media_item.dart';
+import '../domain/entities/channel.dart';
 
 class Player extends StatefulWidget {
   final List<Channel> channels;
   final int initialIndex;
 
-  const Player({required this.channels, required this.initialIndex, Key? key})
-      : super(key: key);
+  const Player({
+    required this.channels,
+    required this.initialIndex,
+    super.key,
+  });
 
   @override
-  _PlayerState createState() => _PlayerState();
+  State<Player> createState() => _PlayerState();
 }
 
 class _PlayerState extends State<Player> {
-  final bool _isTv =
-      const String.fromEnvironment('TARGET', defaultValue: 'mobile') == 'tv';
+  bool get _isTv => AppConfig.isTv;
+  bool get _canCast => _castService != null;
+
   VideoPlayerController? videoPlayerController;
   ChewieController? chewieController;
   late int _currentIndex;
@@ -35,6 +46,7 @@ class _PlayerState extends State<Player> {
   int _nativeViewKey = 0;
   Timer? _overlayTimer;
   bool _showOverlay = false;
+  CastSessionService? _castService;
 
   @override
   void initState() {
@@ -43,6 +55,13 @@ class _PlayerState extends State<Player> {
     _currentIndex = widget.initialIndex;
     _showOverlayFor(const Duration(seconds: 4));
     _loadChannel(_currentIndex);
+    if (!_isTv) {
+      final client = createCastClient(appId: AppConfig.defaultCastAppId);
+      if (client != null) {
+        _castService = CastSessionService(client: client);
+        unawaited(_castService!.initialize());
+      }
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focusNode.requestFocus();
@@ -72,9 +91,7 @@ class _PlayerState extends State<Player> {
       return;
     }
 
-    if (_isTv &&
-        !kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android) {
+    if (_isTv && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       _nativeStreamUrl = channel.streamUrl;
       _nativeViewKey++;
       WakelockPlus.enable();
@@ -227,8 +244,7 @@ class _PlayerState extends State<Player> {
   }
 
   Widget _buildTvOverlay(Channel channel) {
-    final bool overlayVisible =
-        _showOverlay || _isLoading || _channelNotFound;
+    final bool overlayVisible = _showOverlay || _isLoading || _channelNotFound;
     final String groupTitle = channel.groupTitle.trim();
     return IgnorePointer(
       ignoring: true,
@@ -245,10 +261,10 @@ class _PlayerState extends State<Player> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withAlpha(166),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withAlpha(38),
                     width: 1,
                   ),
                 ),
@@ -294,49 +310,18 @@ class _PlayerState extends State<Player> {
                 ),
               ),
             ),
-            Positioned(
-              right: 24,
-              top: 24,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.redAccent.withOpacity(0.8),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.fiber_manual_record,
-                        color: Colors.redAccent, size: 12),
-                    SizedBox(width: 6),
-                    Text(
-                      'LIVE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
             if (_isLoading)
               Center(
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withAlpha(179),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       SizedBox(
                         width: 28,
                         height: 28,
@@ -363,12 +348,12 @@ class _PlayerState extends State<Player> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withAlpha(179),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.tv_off, color: Colors.white70, size: 34),
                       SizedBox(height: 12),
                       Text(
@@ -404,8 +389,7 @@ class _PlayerState extends State<Player> {
       surfaceFactory: (context, controller) {
         return AndroidViewSurface(
           controller: controller as AndroidViewController,
-          gestureRecognizers:
-              const <Factory<OneSequenceGestureRecognizer>>{},
+          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
           hitTestBehavior: PlatformViewHitTestBehavior.opaque,
         );
       },
@@ -419,17 +403,248 @@ class _PlayerState extends State<Player> {
           },
           creationParamsCodec: const StandardMessageCodec(),
         );
-        controller.addOnPlatformViewCreatedListener(
-            params.onPlatformViewCreated);
+        controller
+            .addOnPlatformViewCreatedListener(params.onPlatformViewCreated);
         controller.create();
         return controller;
       },
     );
   }
 
+  CastMediaItem _buildCastMediaItem(Channel channel) {
+    final logoUrl = channel.logoUrl.trim();
+    final groupTitle = channel.groupTitle.trim();
+    return CastMediaItem(
+      streamUrl: Uri.parse(channel.streamUrl),
+      title: channel.name,
+      subtitle: groupTitle.isEmpty ? null : groupTitle,
+      imageUrl: logoUrl.isEmpty ? null : Uri.tryParse(logoUrl),
+    );
+  }
+
+  Future<void> _showCastDeviceSheet(Channel channel) async {
+    final castService = _castService;
+    if (castService == null) {
+      return;
+    }
+    final streamUrl = channel.streamUrl.trim();
+    if (streamUrl.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No stream URL available for casting.')),
+      );
+      return;
+    }
+
+    final media = _buildCastMediaItem(channel);
+    bool discoveryStarted = false;
+    try {
+      await castService.startDiscovery();
+      discoveryStarted = true;
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cast unavailable: $error')),
+        );
+      }
+      return;
+    }
+    if (!mounted) {
+      if (discoveryStarted) {
+        await castService.stopDiscovery();
+      }
+      return;
+    }
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: const Color(0xFF15161C),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (sheetContext) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.cast, color: Colors.white),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Cast to device',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 240,
+                    child: StreamBuilder<List<CastDevice>>(
+                      stream: castService.devicesStream,
+                      builder: (context, snapshot) {
+                        final devices = snapshot.data ?? const [];
+                        if (devices.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'Searching for devices...',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          itemCount: devices.length,
+                          separatorBuilder: (context, index) =>
+                              const Divider(color: Colors.white12),
+                          itemBuilder: (context, index) {
+                            final device = devices[index];
+                            return ListTile(
+                              leading: const Icon(
+                                Icons.tv,
+                                color: Colors.white70,
+                              ),
+                              title: Text(
+                                device.name,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              subtitle: device.modelName == null
+                                  ? null
+                                  : Text(
+                                      device.modelName!,
+                                      style: const TextStyle(
+                                        color: Colors.white60,
+                                      ),
+                                    ),
+                              onTap: () => _handleCastDeviceTap(
+                                sheetContext,
+                                castService,
+                                device,
+                                media,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  StreamBuilder<CastConnectionState>(
+                    stream: castService.connectionStateStream,
+                    initialData: castService.connectionState,
+                    builder: (context, snapshot) {
+                      if (snapshot.data != CastConnectionState.connected) {
+                        return const SizedBox.shrink();
+                      }
+                      return Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () async {
+                            await castService.disconnect();
+                            if (sheetContext.mounted) {
+                              Navigator.of(sheetContext).pop();
+                            }
+                          },
+                          icon: const Icon(Icons.stop, color: Colors.white70),
+                          label: const Text(
+                            'Stop casting',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } finally {
+      if (discoveryStarted) {
+        await castService.stopDiscovery();
+      }
+    }
+  }
+
+  Future<void> _handleCastDeviceTap(
+    BuildContext sheetContext,
+    CastSessionService castService,
+    CastDevice device,
+    CastMediaItem media,
+  ) async {
+    try {
+      if (castService.connectionState == CastConnectionState.connected) {
+        await castService.disconnect();
+      }
+      await castService.connectAndCast(device: device, media: media);
+      if (sheetContext.mounted) {
+        Navigator.of(sheetContext).pop();
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Casting failed: $error')),
+      );
+    }
+  }
+
+  Widget _buildCastButton(Channel channel) {
+    final castService = _castService;
+    if (castService == null) {
+      return const SizedBox.shrink();
+    }
+    return Positioned(
+      right: 16,
+      bottom: 20,
+      child: SafeArea(
+        child: StreamBuilder<CastConnectionState>(
+          stream: castService.connectionStateStream,
+          initialData: castService.connectionState,
+          builder: (context, snapshot) {
+            final state = snapshot.data ?? CastConnectionState.disconnected;
+            final icon = state == CastConnectionState.connected
+                ? Icons.cast_connected
+                : Icons.cast;
+            return Material(
+              color: Colors.black54,
+              shape: const CircleBorder(),
+              child: IconButton(
+                key: const ValueKey('cast-button'),
+                tooltip: 'Cast',
+                icon: Icon(icon, color: Colors.white),
+                onPressed: () => _showCastDeviceSheet(channel),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _disposeControllers();
+    final castService = _castService;
+    if (castService != null) {
+      unawaited(castService.stopDiscovery());
+    }
     _focusNode.dispose();
     _overlayTimer?.cancel();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -452,19 +667,17 @@ class _PlayerState extends State<Player> {
       shortcuts: <LogicalKeySet, Intent>{
         LogicalKeySet(LogicalKeyboardKey.arrowUp):
             const _PreviousChannelIntent(),
-        LogicalKeySet(LogicalKeyboardKey.arrowDown):
-            const _NextChannelIntent(),
-        LogicalKeySet(LogicalKeyboardKey.channelUp):
-            const _NextChannelIntent(),
+        LogicalKeySet(LogicalKeyboardKey.arrowDown): const _NextChannelIntent(),
+        LogicalKeySet(LogicalKeyboardKey.channelUp): const _NextChannelIntent(),
         LogicalKeySet(LogicalKeyboardKey.channelDown):
             const _PreviousChannelIntent(),
         LogicalKeySet(LogicalKeyboardKey.select): const _ShowOverlayIntent(),
         LogicalKeySet(LogicalKeyboardKey.enter): const _ShowOverlayIntent(),
-        LogicalKeySet(LogicalKeyboardKey.numpadEnter): const _ShowOverlayIntent(),
+        LogicalKeySet(LogicalKeyboardKey.numpadEnter):
+            const _ShowOverlayIntent(),
         LogicalKeySet(LogicalKeyboardKey.info): const _ShowOverlayIntent(),
         if (kIsWeb)
-          LogicalKeySet(LogicalKeyboardKey.escape):
-              const _ExitPlayerIntent(),
+          LogicalKeySet(LogicalKeyboardKey.escape): const _ExitPlayerIntent(),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -506,18 +719,24 @@ class _PlayerState extends State<Player> {
                       _buildTvOverlay(channel),
                     ],
                   )
-                : _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    : _channelNotFound
-                        ? const Center(
-                            child: Text('Channel not available now',
-                                style: TextStyle(fontSize: 24.0)),
-                          )
-                        : SizedBox.expand(
-                            child: _buildPlayerSurface(),
-                          ),
+                : Stack(
+                    children: [
+                      if (_isLoading)
+                        const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      else if (_channelNotFound)
+                        const Center(
+                          child: Text('Channel not available now',
+                              style: TextStyle(fontSize: 24.0)),
+                        )
+                      else
+                        SizedBox.expand(
+                          child: _buildPlayerSurface(),
+                        ),
+                      if (_canCast) _buildCastButton(channel),
+                    ],
+                  ),
           ),
         ),
       ),

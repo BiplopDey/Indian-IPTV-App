@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'screens/home.dart';
 
-void main() => runApp(M3UPlayer());
+void main() => runApp(const M3UPlayer());
 
 class M3UPlayer extends StatefulWidget {
+  const M3UPlayer({super.key});
+
   @override
-  _M3UPlayerState createState() => _M3UPlayerState();
+  State<M3UPlayer> createState() => _M3UPlayerState();
 }
 
 class _M3UPlayerState extends State<M3UPlayer> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Live Tv',
-      home: const Home(),
+      home: Home(),
     );
   }
 }

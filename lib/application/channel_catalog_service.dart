@@ -75,8 +75,7 @@ class ChannelCatalogService {
       return _remoteIndex!;
     }
     final text = await _playlistSource.fetchPlaylist(playlistUrl);
-    final parsed =
-        _playlistParser.parse(text, defaultLogoUrl: defaultLogoUrl);
+    final parsed = _playlistParser.parse(text, defaultLogoUrl: defaultLogoUrl);
     final index = <String, Channel>{};
     for (final channel in parsed) {
       final key = _normalizer.normalizeName(channel.name);
