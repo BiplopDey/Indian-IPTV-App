@@ -16,3 +16,4 @@
 - Synced `assets/all_channels_available.yml` with the remote playlist and aligned display casing with filtered names.
 - Updated the Android splash to avoid white startup screens and centered the app icon.
 - Refactored the TV add-channels dialog to avoid framework assertions and added a close-flow test.
+- Bumped app version to 2.2.1+16 for the next TV debug APK.
