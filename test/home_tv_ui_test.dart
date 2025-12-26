@@ -120,6 +120,42 @@ void main() {
     expect(find.text('Flavor: tv'), findsOneWidget);
   });
 
+  testWidgets('Home renders compact TV layout on narrow screens',
+      (WidgetTester tester) async {
+    final view = tester.view;
+    view.physicalSize = const Size(960, 720);
+    view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      view.resetPhysicalSize();
+      view.resetDevicePixelRatio();
+    });
+
+    final channels = [
+      Channel(
+        name: 'Alpha TV',
+        logoUrl: '',
+        streamUrl: 'http://example.com/alpha.m3u8',
+        groupTitle: 'News',
+      ),
+    ];
+    final service = _FakeChannelsService(channels);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Home(
+          channelsService: service,
+          versionLoader: _FakeVersionLoader(),
+          autoLaunchPlayer: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Live TV'), findsOneWidget);
+    expect(find.text('Add Channels'), findsOneWidget);
+    expect(find.text('All Channels'), findsOneWidget);
+  });
+
   testWidgets('TvHomeLayout shows loading card when empty and loading',
       (WidgetTester tester) async {
     final controller = ScrollController();
@@ -212,6 +248,56 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
+
+    FlutterError.onError = previousHandler;
+    expect(errors, isEmpty);
+  });
+
+  testWidgets('TV add channels dialog closes cleanly after selection',
+      (WidgetTester tester) async {
+    final errors = <FlutterErrorDetails>[];
+    final previousHandler = FlutterError.onError;
+    FlutterError.onError = (details) => errors.add(details);
+
+    final channels = [
+      Channel(
+        name: 'Alpha TV',
+        logoUrl: '',
+        streamUrl: 'http://example.com/alpha.m3u8',
+        groupTitle: '',
+      ),
+      Channel(
+        name: 'Beta TV',
+        logoUrl: '',
+        streamUrl: 'http://example.com/beta.m3u8',
+        groupTitle: '',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              showTvAddChannelsDialog(
+                context: context,
+                remoteChannels: Future.value(channels),
+                existingChannels: const [],
+                normalizeName: (value) => value.toLowerCase(),
+              );
+            });
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.text('Alpha TV'));
+    await tester.pump();
+    await tester.tap(find.text('Add (1)'));
+    await tester.pumpAndSettle();
 
     FlutterError.onError = previousHandler;
     expect(errors, isEmpty);

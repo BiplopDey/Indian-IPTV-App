@@ -10,166 +10,16 @@ Future<List<Channel>> showTvAddChannelsDialog({
   required List<Channel> existingChannels,
   required String Function(String) normalizeName,
 }) async {
-  String query = '';
-  final selectedKeys = <String>{};
-  final searchController = TextEditingController();
-  final scrollController = ScrollController();
-
-  await showDialog<void>(
+  final selectedKeys = await showDialog<Set<String>>(
     context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) {
-        return TvDialogFrame(
-          title: 'Add Channels',
-          actions: [
-            TvActionButton(
-              label: 'Cancel',
-              onActivate: () => Navigator.pop(context),
-            ),
-            TvActionButton(
-              label: 'Clear',
-              onActivate: selectedKeys.isEmpty
-                  ? null
-                  : () {
-                      setState(selectedKeys.clear);
-                    },
-            ),
-            TvActionButton(
-              label:
-                  selectedKeys.isEmpty ? 'Add' : 'Add (${selectedKeys.length})',
-              primary: true,
-              onActivate:
-                  selectedKeys.isEmpty ? null : () => Navigator.pop(context),
-            ),
-          ],
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Focus(
-                onKeyEvent: (node, event) {
-                  if (event is KeyDownEvent &&
-                      event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                    FocusScope.of(context).nextFocus();
-                    return KeyEventResult.handled;
-                  }
-                  return KeyEventResult.ignored;
-                },
-                child: TextField(
-                  controller: searchController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'Search channels...',
-                    filled: true,
-                    fillColor: Colors.black.withAlpha(40),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.white.withAlpha(30)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.white.withAlpha(30)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide:
-                          BorderSide(color: Colors.white.withAlpha(120)),
-                    ),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  onChanged: (value) {
-                    setState(() {
-                      query = value;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: FutureBuilder<List<Channel>>(
-                  future: remoteChannels,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return const Center(
-                        child: Text(
-                          'Unable to load channels.',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      );
-                    }
-                    final remoteList = snapshot.data ?? [];
-                    final lowerQuery = query.toLowerCase();
-                    final existingKeys = existingChannels
-                        .map((channel) => normalizeName(channel.name))
-                        .where((key) => key.isNotEmpty)
-                        .toSet();
-                    final filtered = remoteList.where((channel) {
-                      final key = normalizeName(channel.name);
-                      if (existingKeys.contains(key)) {
-                        return false;
-                      }
-                      if (lowerQuery.isEmpty) {
-                        return true;
-                      }
-                      return channel.name.toLowerCase().contains(lowerQuery);
-                    }).toList();
-
-                    if (filtered.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No channels found.',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      );
-                    }
-
-                    return Scrollbar(
-                      controller: scrollController,
-                      thumbVisibility: true,
-                      child: ListView.separated(
-                        controller: scrollController,
-                        itemCount: filtered.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final channel = filtered[index];
-                          final key = normalizeName(channel.name);
-                          final selected = selectedKeys.contains(key);
-                          return TvChannelSelectTile(
-                            channel: channel,
-                            selected: selected,
-                            onToggle: () {
-                              setState(() {
-                                if (selected) {
-                                  selectedKeys.remove(key);
-                                } else {
-                                  selectedKeys.add(key);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    builder: (dialogContext) => _TvAddChannelsDialog(
+      remoteChannels: remoteChannels,
+      existingChannels: existingChannels,
+      normalizeName: normalizeName,
     ),
   );
 
-  searchController.dispose();
-  scrollController.dispose();
-
-  if (selectedKeys.isEmpty) {
+  if (selectedKeys == null || selectedKeys.isEmpty) {
     return const [];
   }
 
@@ -184,6 +34,191 @@ Future<List<Channel>> showTvAddChannelsDialog({
         selectedKeys.contains(key) &&
         !existingKeys.contains(key);
   }).toList();
+}
+
+class _TvAddChannelsDialog extends StatefulWidget {
+  final Future<List<Channel>> remoteChannels;
+  final List<Channel> existingChannels;
+  final String Function(String) normalizeName;
+
+  const _TvAddChannelsDialog({
+    required this.remoteChannels,
+    required this.existingChannels,
+    required this.normalizeName,
+  });
+
+  @override
+  State<_TvAddChannelsDialog> createState() => _TvAddChannelsDialogState();
+}
+
+class _TvAddChannelsDialogState extends State<_TvAddChannelsDialog> {
+  final Set<String> _selectedKeys = <String>{};
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  late final Set<String> _existingKeys = widget.existingChannels
+      .map((channel) => widget.normalizeName(channel.name))
+      .where((key) => key.isNotEmpty)
+      .toSet();
+  late final Future<List<Channel>> _remoteFuture = widget.remoteChannels;
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleCancel() {
+    FocusScope.of(context).unfocus();
+    Navigator.pop(context);
+  }
+
+  void _handleClear() {
+    setState(_selectedKeys.clear);
+  }
+
+  void _handleAdd() {
+    FocusScope.of(context).unfocus();
+    Navigator.pop(context, Set<String>.from(_selectedKeys));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TvDialogFrame(
+      title: 'Add Channels',
+      actions: [
+        TvActionButton(
+          label: 'Cancel',
+          onActivate: _handleCancel,
+        ),
+        TvActionButton(
+          label: 'Clear',
+          onActivate: _selectedKeys.isEmpty ? null : _handleClear,
+        ),
+        TvActionButton(
+          label:
+              _selectedKeys.isEmpty ? 'Add' : 'Add (${_selectedKeys.length})',
+          primary: true,
+          onActivate: _selectedKeys.isEmpty ? null : _handleAdd,
+        ),
+      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Focus(
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                FocusScope.of(context).nextFocus();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Search channels...',
+                filled: true,
+                fillColor: Colors.black.withAlpha(40),
+                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.white.withAlpha(30)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.white.withAlpha(30)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: Colors.white.withAlpha(120)),
+                ),
+              ),
+              style: const TextStyle(color: Colors.white),
+              onChanged: (value) {
+                setState(() {
+                  _query = value;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: FutureBuilder<List<Channel>>(
+              future: _remoteFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text(
+                      'Unable to load channels.',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  );
+                }
+                final remoteList = snapshot.data ?? [];
+                final lowerQuery = _query.toLowerCase();
+                final filtered = remoteList.where((channel) {
+                  final key = widget.normalizeName(channel.name);
+                  if (_existingKeys.contains(key)) {
+                    return false;
+                  }
+                  if (lowerQuery.isEmpty) {
+                    return true;
+                  }
+                  return channel.name.toLowerCase().contains(lowerQuery);
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No channels found.',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  );
+                }
+
+                return Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: true,
+                  child: ListView.separated(
+                    controller: _scrollController,
+                    itemCount: filtered.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final channel = filtered[index];
+                      final key = widget.normalizeName(channel.name);
+                      final selected = _selectedKeys.contains(key);
+                      return TvChannelSelectTile(
+                        channel: channel,
+                        selected: selected,
+                        onToggle: () {
+                          setState(() {
+                            if (selected) {
+                              _selectedKeys.remove(key);
+                            } else {
+                              _selectedKeys.add(key);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 Future<void> showTvManageChannelsDialog({

@@ -2,6 +2,11 @@
 
 This project is a Flutter app. Use the steps below to run it locally.
 
+## Product stance
+
+- Android TV is the primary target.
+- Any UI/UX change made for TV must also be applied to the web experience.
+
 ## Web
 
 Run a local web server:
@@ -88,8 +93,8 @@ Run before marking a task complete only when code is modified (skip for docs-onl
 
 ```
 /home/biplop/flutter/bin/flutter pub get
-dart format .
-dart analyze
+/home/biplop/flutter/bin/dart format .
+/home/biplop/flutter/bin/dart analyze
 /home/biplop/flutter/bin/flutter test
 ```
 

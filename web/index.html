@@ -31,6 +31,45 @@
 
   <title>IPTV</title>
   <link rel="manifest" href="manifest.json">
+  <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #0a0f1c;
+    }
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: radial-gradient(circle at 20% 20%, rgba(22, 184, 255, 0.18), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(255, 209, 86, 0.2), transparent 50%),
+        linear-gradient(160deg, #0d1220 0%, #0a0f1c 100%);
+      color: #fff;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      z-index: 9999;
+    }
+    #loading img {
+      width: 120px;
+      height: 120px;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #16b8ff;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 
   <script>
     // The value below is injected by flutter build, do not touch.
@@ -40,6 +79,11 @@
   <script src="flutter.js" defer></script>
 </head>
 <body>
+  <div id="loading">
+    <img src="icons/Icon-192.png" alt="IPTV logo" />
+    <div class="spinner"></div>
+    <div>Loading Live TV...</div>
+  </div>
   <script>
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
@@ -50,6 +94,10 @@
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
             appRunner.runApp();
+            const loader = document.getElementById('loading');
+            if (loader) {
+              loader.remove();
+            }
           });
         }
       });

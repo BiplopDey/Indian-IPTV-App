@@ -43,6 +43,10 @@ class TvHomeLayout extends StatelessWidget {
     return 3;
   }
 
+  bool _useCompactLayout(BoxConstraints constraints) {
+    return constraints.maxWidth < 1100;
+  }
+
   Widget _buildBackground() {
     return Container(
       decoration: const BoxDecoration(
@@ -168,6 +172,93 @@ class TvHomeLayout extends StatelessWidget {
     );
   }
 
+  Widget _buildCompactRail() {
+    final VoidCallback? addHandler = isLoading ? null : onAddChannel;
+    final VoidCallback? manageHandler = isLoading ? null : onManageChannels;
+    final VoidCallback? refreshHandler = isLoading ? null : onRefresh;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+      decoration: BoxDecoration(
+        color: Colors.black.withAlpha(64),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withAlpha(15),
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Image.asset(
+                'assets/images/tv-icon.png',
+                width: 30,
+                height: 30,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Live TV',
+                style: GoogleFonts.spaceGrotesk(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                version == null ? 'Flavor: $flavor' : 'v$version • $flavor',
+                style: GoogleFonts.spaceGrotesk(
+                  color: tvTextMuted,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: 180,
+                child: TvRailItem(
+                  icon: Icons.add_circle_outline,
+                  label: 'Add Channels',
+                  onActivate: addHandler,
+                ),
+              ),
+              SizedBox(
+                width: 200,
+                child: TvRailItem(
+                  icon: Icons.tune,
+                  label: 'Manage Channels',
+                  onActivate: manageHandler,
+                ),
+              ),
+              SizedBox(
+                width: 170,
+                child: TvRailItem(
+                  icon: Icons.refresh,
+                  label: 'Refresh List',
+                  onActivate: refreshHandler,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Use CH+ / CH- in player',
+            style: GoogleFonts.spaceGrotesk(
+              color: tvTextMuted,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHero() {
     final Channel? channel = channels.isEmpty ? null : channels.first;
     return FocusTraversalGroup(
@@ -258,67 +349,123 @@ class TvHomeLayout extends StatelessWidget {
       );
     }
 
-    return Shortcuts(
-      shortcuts: <LogicalKeySet, Intent>{
-        LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
-        LogicalKeySet(LogicalKeyboardKey.enter): const ActivateIntent(),
-        LogicalKeySet(LogicalKeyboardKey.numpadEnter): const ActivateIntent(),
-      },
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            _buildBackground(),
-            SafeArea(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildRail(),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 8, 0),
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0, end: 1),
-                        duration: const Duration(milliseconds: 520),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
-                            child: Transform.translate(
-                              offset: Offset(0, 14 * (1 - value)),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool compact = _useCompactLayout(constraints);
+        return Shortcuts(
+          shortcuts: <LogicalKeySet, Intent>{
+            LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
+            LogicalKeySet(LogicalKeyboardKey.enter): const ActivateIntent(),
+            LogicalKeySet(LogicalKeyboardKey.numpadEnter):
+                const ActivateIntent(),
+          },
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Stack(
+              children: [
+                _buildBackground(),
+                SafeArea(
+                  child: compact
+                      ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 4),
-                            _buildHero(),
-                            const SizedBox(height: 24),
-                            Text(
-                              'All Channels',
-                              style: GoogleFonts.spaceGrotesk(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
+                            _buildCompactRail(),
+                            Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0, end: 1),
+                                  duration: const Duration(milliseconds: 520),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: Transform.translate(
+                                        offset: Offset(0, 14 * (1 - value)),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      _buildHero(),
+                                      const SizedBox(height: 20),
+                                      Text(
+                                        'All Channels',
+                                        style: GoogleFonts.spaceGrotesk(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Expanded(
+                                        child: _buildGrid(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildRail(),
                             Expanded(
-                              child: _buildGrid(),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(24, 24, 8, 0),
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0, end: 1),
+                                  duration: const Duration(milliseconds: 520),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: Transform.translate(
+                                        offset: Offset(0, 14 * (1 - value)),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      _buildHero(),
+                                      const SizedBox(height: 24),
+                                      Text(
+                                        'All Channels',
+                                        style: GoogleFonts.spaceGrotesk(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Expanded(
+                                        child: _buildGrid(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

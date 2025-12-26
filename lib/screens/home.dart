@@ -36,7 +36,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  bool get _isTv => AppConfig.isTv;
+  bool get _useTvLayout => AppConfig.useTvLayout();
 
   late final HomeController _controller;
   late final bool _ownsController;
@@ -149,7 +149,7 @@ class _HomeState extends State<Home> {
   }
 
   Future<List<Channel>> _showAddChannelsDialog() {
-    if (_isTv) {
+    if (_useTvLayout) {
       return showTvAddChannelsDialog(
         context: context,
         remoteChannels: _controller.fetchRemoteChannels(),
@@ -220,7 +220,7 @@ class _HomeState extends State<Home> {
             assetPath: 'assets/images/tv-icon.png',
           );
         }
-        if (_isTv) {
+        if (_useTvLayout) {
           return TvHomeLayout(
             channels: state.filteredChannels,
             isLoading: state.isLoading,
