@@ -17,5 +17,5 @@
 - Updated the Android splash to avoid white startup screens and centered the app icon.
 - Refactored the TV add-channels dialog to avoid framework assertions and added a close-flow test.
 - Bumped app version to 2.2.1+16 for the next TV debug APK.
-- Updated TV manifest launch config (theme/exported/banner) to improve TV launcher start reliability.
-- Bumped app version to 2.2.1+17 for the latest TV debug APK.
+- Reverted TV manifest to the known-good launcher setup used in 2.2.1+15.
+- Bumped app version to 2.2.1+18 for the next TV debug APK.
